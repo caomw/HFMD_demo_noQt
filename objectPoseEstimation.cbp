@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+   <FileVersion major="1" minor="6" />
+   <Project>
+      <Option title="objectPoseEstimation" />
+      <Option makefile_is_custom="1" />
+      <Option compiler="gcc" />
+      <Option virtualFolders="CMake Files\;CMake Files\..\;CMake Files\..\..\;CMake Files\..\..\..\;CMake Files\..\..\..\..\;CMake Files\..\..\..\..\usr\;CMake Files\..\..\..\..\usr\local\;CMake Files\..\..\..\..\usr\local\share\;CMake Files\..\..\..\..\usr\local\share\OpenCV\;" />
+      <Build>
+      <Target title="all">
+         <Option working_dir="/Users/masahiko/Programs/HFMD_evaluate" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 all" />
+            <CompileFile command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="learning">
+         <Option output="/Users/masahiko/Programs/HFMD_evaluate/learning" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/Users/masahiko/Programs/HFMD_evaluate" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/Users/masahiko/Programs/HFMD_evaluate" />
+            <Add directory="/usr/local/include" />
+            <Add directory="/usr/local/include/opencv" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 learning" />
+            <CompileFile command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="learning/fast">
+         <Option output="/Users/masahiko/Programs/HFMD_evaluate/learning" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/Users/masahiko/Programs/HFMD_evaluate" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/Users/masahiko/Programs/HFMD_evaluate" />
+            <Add directory="/usr/local/include" />
+            <Add directory="/usr/local/include/opencv" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 learning/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="objectPoseEstimation">
+         <Option output="/Users/masahiko/Programs/HFMD_evaluate/objectPoseEstimation" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/Users/masahiko/Programs/HFMD_evaluate" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/Users/masahiko/Programs/HFMD_evaluate" />
+            <Add directory="/usr/local/include" />
+            <Add directory="/usr/local/include/opencv" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 objectPoseEstimation" />
+            <CompileFile command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="objectPoseEstimation/fast">
+         <Option output="/Users/masahiko/Programs/HFMD_evaluate/objectPoseEstimation" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/Users/masahiko/Programs/HFMD_evaluate" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/Users/masahiko/Programs/HFMD_evaluate" />
+            <Add directory="/usr/local/include" />
+            <Add directory="/usr/local/include/opencv" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 objectPoseEstimation/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="rebuild_cache">
+         <Option working_dir="/Users/masahiko/Programs/HFMD_evaluate" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 rebuild_cache" />
+            <CompileFile command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/Users/masahiko/Programs/HFMD_evaluate/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      </Build>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/CRForest.cpp">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/CRTree.cpp">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/HoG.cpp">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/learning.cpp">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/objectPoseEstimation.cpp">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/util.cpp">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/CRForest.h">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/CRTree.h">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/HoG.h">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/source/util.h">
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\" />
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/../../../../usr/local/share/OpenCV/OpenCVConfig-version.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\usr\local\share\OpenCV\" />
+      </Unit>
+      <Unit filename="/Users/masahiko/Programs/HFMD_evaluate/../../../../usr/local/share/OpenCV/OpenCVConfig.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\usr\local\share\OpenCV\" />
+      </Unit>
+   </Project>
+</CodeBlocks_project_file>

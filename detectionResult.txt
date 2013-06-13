@@ -1,0 +1,3 @@
+bottle bottle 0 11.4018
+bottle bottle 0 25.0998
+ornament bottle 0 18.4391
