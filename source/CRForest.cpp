@@ -149,8 +149,9 @@ void CRForest::detection(CTestDataset &testSet) const{
 
     cv::Mat showDepth = cv::Mat(480,640, CV_8U);
     testSet.img.at(1)->convertTo(showDepth, CV_8U, 255.0 / 1000.0);
-    cv::imshow("depthImage",showDepth);
 
+    cv::imshow("depthImage",showDepth);
+    //cv::waitKey(0);
 
 
     testSet.extractFeatures();
