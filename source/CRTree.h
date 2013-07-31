@@ -21,12 +21,12 @@ public:
     ~LeafNode(){};
 
     //void show(int delay, int width, int height);
-//    void print()
-//    {
-//        std::cout << "Leaf " << vCenter.size() << " ";
-//        for(int i = 0; i < pfg.size(); i++)std::cout << pfg.at(i) << " ";
-//        std::cout << std::endl;
-//    }
+    //    void print()
+    //    {
+    //        std::cout << "Leaf " << vCenter.size() << " ";
+    //        for(int i = 0; i < pfg.size(); i++)std::cout << pfg.at(i) << " ";
+    //        std::cout << std::endl;
+    //    }
     std::vector<float> pfg;
     //std::vector<std::vector<cv::Point> > vCenter; // per class per patch
     //std::vector<int> vClass;
@@ -53,7 +53,7 @@ public:
            int		max_d,	//max depth of tree
            int		cp,	//number of center point
            CClassDatabase cDatabase/*,
-                         boost::mt19937	randomGen*/	// random number seed
+                                       boost::mt19937	randomGen*/	// random number seed
            )
         : min_samples(min_s), max_depth(max_d), num_leaf(0), num_cp(cp), classDatabase(cDatabase)
     {
@@ -95,7 +95,7 @@ public:
     //boost::mt19937 gen;
     bool optimizeTest(CTrainSet &SetA,
                       CTrainSet &SetB,
-                      const CTrainSet &trainSet,
+                      CTrainSet &trainSet,
                       int* test,
                       unsigned int iter,
                       unsigned int measure_mode,
@@ -105,7 +105,7 @@ public:
 
     void makeLeaf(CTrainSet &trainSet, float pnratio, int node);
 
-    void evaluateTest(std::vector<std::vector<IntIndex> >& valSet, const int* test, const CTrainSet &trainSet);
+    void evaluateTest(std::vector<std::vector<IntIndex> >& valSet, const int* test, CTrainSet &trainSet);
     void split(CTrainSet& SetA, CTrainSet& SetB, const CTrainSet& TrainSet, const std::vector<std::vector<IntIndex> >& valSet, int t);
     double distMean(const std::vector<CPosPatch>& SetA, const std::vector<CPosPatch>& SetB);
     double InfGain(const CTrainSet& SetA, const CTrainSet& SetB);
@@ -117,7 +117,7 @@ public:
         else
             return distMean(SetA.posPatch, SetB.posPatch) * -1;
     }
-    void calcHaarLikeFeature(const cv::Mat &patch, const int* test, int &p1, int &p2) const;
+    void calcHaarLikeFeature(const cv::Mat &patch, const int* test, double &p1, double &p2) const;
 
 
 
@@ -125,10 +125,10 @@ public:
 
     // IO functions
     bool saveTree(const char* filename) const;
-//    void showLeaves(int width, int height) const {
-//        for(unsigned int l=0; l<num_leaf; ++l)
-//            leaf[l].show(5000, width, height);
-//    }
+    //    void showLeaves(int width, int height) const {
+    //        for(unsigned int l=0; l<num_leaf; ++l)
+    //            leaf[l].show(5000, width, height);
+    //    }
 
 private:
     // Data structure
@@ -165,7 +165,7 @@ private:
 
     CClassDatabase classDatabase;
 
-    void normarizationByDepth(const CPatch* patch,cv::Mat& rgb)const;//, const CConfig &config)const;
+    //void normarizationByDepth(CPatch* patch,cv::Mat& rgb)const;//, const CConfig &config)const;
 
 };
 
@@ -186,21 +186,45 @@ inline void CRTree::generateTest(int* test, unsigned int max_w, unsigned int max
     //std::cout << "learning mode : " << config.learningMode << std::endl;
 
     switch(config.learningMode){
-    case 0:
-        // rgbd
-        if((1 - exp(-1 * (double)depth / (lamda/5))) > rand2()){
+    case 0:// rgbd
+        if(rand2() > 0.3){//(1 - exp(-1 * (double)depth / (lamda/5))) > rand2()){
 
-            // rgb
-            test[0] = rand() % max_w;
-            test[1] = rand() % max_h;
-            test[4] = rand() % max_w;
-            test[5] = rand() % max_h;
-            test[8] = rand() % (max_c - 1);
+            if(config.rgbFeature == 1){
 
-            test[2] = 0;
-            test[3] = 0;
-            test[6] = 0;
-            test[7] = 0;
+                // rgb
+                test[0] = rand() % max_w;
+                test[1] = rand() % max_h;
+                test[4] = rand() % max_w;
+                test[5] = rand() % max_h;
+                test[8] = rand() % (max_c - 1);
+
+                test[2] = 0;
+                test[3] = 0;
+                test[6] = 0;
+                test[7] = 0;
+            }else if(config.rgbFeature != 1){
+                int rgb = rand() % 3;
+
+                test[8] = rgb;
+                // caliculate haar-like features
+                int angle = rand() % 360;
+                int type = rand() % 5;
+                int ratio = (rand() % 30) + 10;
+                if(config.depthFeature == 2)
+                    test[0] = angle;
+                else
+                    test[0] = 0;
+                test[1] = type;
+                test[2] = ratio;
+
+                test[3] = -1;
+                test[4] = -1;
+                test[5] = -1;
+                test[6] = -1;
+                test[7] = -1;
+
+            }
+
         }else{
 
             // depth
@@ -209,10 +233,13 @@ inline void CRTree::generateTest(int* test, unsigned int max_w, unsigned int max
 
             // caliculate haar-like features
             int angle = rand() % 360;
-            int type = rand() % 3;
-            int ratio = (rand() % 60) + 20;
+            int type = rand() % 5;
+            int ratio = (rand() % 30) + 10;
 
-            test[0] = angle;
+            if(config.depthFeature == 2)
+                test[0] = angle;
+            else
+                test[0] = 0;
             test[1] = type;
             test[2] = ratio;
 
@@ -221,23 +248,6 @@ inline void CRTree::generateTest(int* test, unsigned int max_w, unsigned int max
             test[5] = -1;
             test[6] = -1;
             test[7] = -1;
-            //            rect1.width = (rand() % (max_w - 4)) + 2;
-            //            rect1.height = (rand() % (max_h - 4)) + 2;
-
-            //            rect1.x = rand() % (max_w - rect1.width);
-            //            rect1.y = rand() % (max_h - rect1.height);
-
-            //            rect2.width = (rand() % (max_w - (rect1.width))
-
-            //            test[0] = rand() % (max_w / 2 - 1);
-            //            test[1] = rand() % (max_h / 2 - 1);
-            //            test[2] = rand() % (max_w / 2 - 1);
-            //            test[3] = rand() % (max_h / 2 - 1);
-
-            //            test[4] = test[0] + test[2] + rand() % (max_w - test[0] - test[2] - 1);
-            //            test[5] = test[1] + test[3] + rand() % (max_h - test[1] - test[3] - 1);
-            //            test[6] = 1 + rand() % (max_w - test[4] - 1);
-            //            test[7] = 1 + rand() % (max_h - test[5] - 1);
         }
         break;
     case 1:
@@ -247,7 +257,7 @@ inline void CRTree::generateTest(int* test, unsigned int max_w, unsigned int max
 
         // caliculate haar-like features
         int angle = rand() % 360;
-        int type = rand() % 3;
+        int type = rand() % 5;
         int ratio = (rand() % 60) + 20;
 
         test[0] = angle;
@@ -264,22 +274,52 @@ inline void CRTree::generateTest(int* test, unsigned int max_w, unsigned int max
     case 2:
     {
         // rgb
-        test[0] = rand() % max_w;
-        test[1] = rand() % max_h;
-        test[4] = rand() % max_w;
-        test[5] = rand() % max_h;
-        test[8] = rand() % (max_c - 1);
+        if(config.rgbFeature == 1){
 
-        test[2] = 0;
-        test[3] = 0;
-        test[6] = 0;
-        test[7] = 0;
+            // rgb
+            test[0] = rand() % max_w;
+            test[1] = rand() % max_h;
+            test[4] = rand() % max_w;
+            test[5] = rand() % max_h;
+            test[8] = rand() % (max_c - 1);
+
+            test[2] = 0;
+            test[3] = 0;
+            test[6] = 0;
+            test[7] = 0;
+        }else if(config.rgbFeature != 1){
+            int rgb = rand() % 3;
+
+            test[8] = rgb;
+            // caliculate haar-like features
+            int angle = rand() % 360;
+            int type = rand() % 5;
+            int ratio = (rand() % 30) + 10;
+            if(config.depthFeature == 2)
+                test[0] = angle;
+            else
+                test[0] = 0;
+            test[1] = type;
+            test[2] = ratio;
+
+            test[3] = -1;
+            test[4] = -1;
+            test[5] = -1;
+            test[6] = -1;
+            test[7] = -1;
+
+        }
         break;
     }
     default:
         std::cout << "error! can't set learning mode!" << std::endl;
         break;
     }
+
+    //    std::cout << "evaluated test" << std::endl;
+    //    for(int i = 0; i < 9; ++i)
+    //        std::cout << test[i] << " ";
+    //    std::cout << std::endl;
 
 }
 

@@ -8,7 +8,7 @@ class CPatch
 {
 public:
     CPatch(CDataset *d, cv::Rect r) : data(d), roi(r){
-        cv::Mat* depthImage = d->img.at(1);
+        //cv::Mat* depthImage = d->img.at(1);
 
     }
     CPatch(){}
@@ -21,7 +21,9 @@ public:
     cv::Rect getRoi()const{return roi;}
 
     cv::Mat* getFeature(int featureNum) const{return data->feature.at(featureNum);}
+    cv::Mat* getDepth() const{return data->img.at(1);}
 
+//    int centerPointValue(){return data->img.at(1)->at<ushort>()}
 private:
     cv::Rect roi;
     double scale;
@@ -38,6 +40,8 @@ public:
     cv::Point getCenterPoint()const{return pData->getParam()->getCenterPoint();}
     int getFeatureNum()const{return pData->feature.size();}
     CParamset getParam()const{return *(pData->getParam());}
+    std::string getRgbImageFilePath(){return pData->getRgbImagePath();}
+    cv::Mat* getDepth() const{return pData->img.at(1);}
 private:
     CPosDataset *pData;
 };
@@ -46,6 +50,8 @@ class CNegPatch : public CPatch{
 public:
     CNegPatch(CNegDataset *neg, cv::Rect r) : nData(neg), CPatch(neg, r){}
     CNegPatch(){}
+    int getFeatureNum()const{return nData->feature.size();}
+    cv::Mat* getDepth() const{return nData->img.at(1);}
     virtual ~CNegPatch(){}
 
 private:
@@ -58,6 +64,7 @@ public:
     CTestPatch(){}
     virtual ~CTestPatch(){}
     //cv::Rect getPatchRoi(){return this->getRoi(
+    int getFeatureNum()const {return tData->feature.size();}
 
 private:
     CTestDataset *tData;

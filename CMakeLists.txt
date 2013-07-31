@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 include(FindPkgConfig)
 
-SET(CMAKE_CXX_COMPILER "clang++")
+#SET(CMAKE_CXX_COMPILER "clang++")
 
 # リリースビルド用オプション
 SET(CMAKE_C_FLAGS_RELEASE "-Wall -O3")
@@ -17,10 +17,11 @@ set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "")
 
 # ビルドのタイプはリリース
-SET(CMAKE_BUILD_TYPE Release)
-#SET(CMAKE_BUILD_TYPE Debug)
+#SET(CMAKE_BUILD_TYPE Release)
+SET(CMAKE_BUILD_TYPE Debug)
 # 環境変数の登録
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 
 # プロジェクト名
 PROJECT(HFMD_demo_noQt)
@@ -28,9 +29,15 @@ PROJECT(HFMD_demo_noQt)
 # 実行に必要なライブラリのパッケージを見つける
 FIND_PACKAGE(OpenCV)
 FIND_PACKAGE(Boost)
+find_package(OpenMP)
 pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 include_directories (${LIBUSB_INCLUDE_DIRS})
 link_directories (${LIBUSB_LIBRARY_DIRS})
+if(OPENMP_FOUND)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPENMP_CXX_FLAGS}")
+endif()
+
 
 FIND_PATH(OPEN_NI_INCLUDE "XnOpenNI.h" "OpenNIConfig.h" HINTS "$ENV{OPEN_NI_INCLUDE}" "/usr/include/ni" "/usr/include/openni" "/opt/ros/groovy/include/openni_camera")
 FIND_LIBRARY(OPEN_NI_LIBRARY NAMES OpenNI libOpenNI HINTS $ENV{OPEN_NI_LIB} "/usr/lib")
@@ -56,7 +63,7 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 # ライブラリの場所
 LINK_DIRECTORIES("/usr/local/lib")
 
-SET(RANDOM_FOREST source/CRForest.cpp source/util.cpp source/CRTree.cpp source/HoG.cpp source/CDataset.cpp source/ctlkinect.cpp)
+SET(RANDOM_FOREST source/CRForest.cpp source/util.cpp source/CRTree.cpp source/HoG.cpp source/CDataset.cpp source/ctlkinect.cpp source/CConfig.cpp)
 
 # 実行ファイルを生成
 ADD_EXECUTABLE(HFMD_demo_noQt source/objectPoseEstimation.cpp ${RANDOM_FOREST})

@@ -2,7 +2,6 @@
 #include "ctlkinect.h"
 #include <opencv2/opencv.hpp>
 #include <boost/timer.hpp>
-//#include "CRTree.h"
 
 #include "util.h"
 
@@ -64,7 +63,7 @@ void loadTestFileMultiObject(CConfig conf, std::vector<CTestDataset> &testSet){
                 //read center point
                 std::string tempClassName;
                 cv::Point tempPoint;
-                double tempAngle;
+                double tempAngle[3];
                 do{
                     CParamset tempParam;
                     //read class name
@@ -76,7 +75,7 @@ void loadTestFileMultiObject(CConfig conf, std::vector<CTestDataset> &testSet){
                         testDataList >> tempPoint.y;
                         //temp.centerPoint.push_back(tempPoint);
                         tempParam.setCenterPoint(tempPoint);
-                        testDataList >> tempAngle;
+                        testDataList >> tempAngle[2];
                         //temp.angles.push_back(tempAngle);
                         tempParam.setAngle(tempAngle);
 
@@ -99,7 +98,7 @@ void detect(const CRForest &forest, CConfig conf){
 
     //std::fstream result("detectionResult.txt", std::ios::out);
 
-    //detectionResult detectR;
+    CDetectionResult detectR;
 
     //set dataset
     //dataSet.clear();
@@ -111,6 +110,10 @@ void detect(const CRForest &forest, CConfig conf){
 //    std::cout << "hitamuki" << std::endl;
 //    }
     //cv::waitKey(0);
+    cv::namedWindow("depth");
+    cv::namedWindow("detectResult");
+    cv::namedWindow("voteImage");
+
     while(cv::waitKey(1) == -1){
 //        dataSet.at(i).loadImage(conf.mindist, conf.maxdist);
 //        detectR = forest.detection(dataSet.at(i));
@@ -123,19 +126,22 @@ void detect(const CRForest &forest, CConfig conf){
 
         kinect.getRGBDData(rgb, depth);
 
-
-
-
         CTestDataset seqImg;
         seqImg.img.push_back(rgb);
         seqImg.img.push_back(depth);
+
+        cv::Mat showDepth = cv::Mat(depth->rows, depth->cols, CV_8U);
+                depth->convertTo(showDepth, CV_8U, 255.0 / 1000.0);
+
+                cv::imshow("detectResult", *seqImg.img.at(0));
+                cv::imshow("depth", showDepth);
 
 
         //seqImg.img.at(1)->convertTo(*showDepth, CV_8U, 255.0 / 1000.0);
 
         //cv::waitKey(0);
 
-        forest.detection(seqImg);
+        detectR = forest.detection(seqImg);
 
     }
     //delete showDepth;

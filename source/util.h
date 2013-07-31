@@ -8,6 +8,7 @@
 #include <string>
 #include <fstream>
 #include <ctime>
+#include <set>
 
 // opencv include file
 #include <opencv2/opencv.hpp>
@@ -22,110 +23,9 @@
 #include "CDataset.h"
 #include "CPatch.h"
 
-class CConfig
-{
-public:
-    CConfig(){
+extern boost::lagged_fibonacci1279 genPose;
 
-    };
-    ~CConfig(){};
-
-    double widthScale,heightScale;
-
-    int loadConfig(const char* filename);
-
-    // Path to trees
-    std::string	treepath;
-    // Number of trees
-    int		ntrees;
-    // Patch width
-    int		p_width;
-    // Patch height
-    int		p_height;
-    // Path to images
-    std::string	impath;
-    // File with names of images
-    std::string	imfiles;
-    // Extract features
-    bool		xtrFeature;
-    // Scales
-    std::vector<float>	scales;
-    // Ratio
-    std::vector<float>	ratios;
-    // Output path
-    std::string	outpath;
-    // scale factor for output image (default: 128)
-    int		out_scale;
-    // Path to training image folder 12/12/14 MasahikoToyoshi
-    std::string	trainpath;
-    // training data file name
-    std::string	traindatafile;
-    // Path to positive examples
-    std::string	trainpospath;
-    // File with postive examples
-    std::string	trainposfiles;
-    // Subset of positive images -1: all images
-    int		subsamples_pos;
-    // Sample patches from pos. examples
-    unsigned int	samples_pos;
-    // Path to positive examples
-    std::string	trainnegpath;
-    // File with postive examples
-    std::string	trainnegfiles;
-    // Subset of neg images -1: all images
-    int		subsamples_neg;
-    // Samples from pos. examples
-    unsigned int	samples_neg;
-    // offset for saving tree number
-    int	off_tree;
-    // train image per tree
-    int	imagePerTree;
-    // sample number per leaf
-    int	min_sample;
-    // max depth of tree
-    int	max_depth;
-    // feature channel number
-    int	featureChannel;
-    // extract patch ratio
-    double	patchRatio;
-    // stride of getting patch
-    int stride;
-    // test data path
-    std::string testPath;
-    // test data file
-    std::string testData;
-    // test mode
-    int testMode;
-    double detectThreshold;
-
-    std::string negDataPath,negDataList;
-
-    int showGT;
-
-    std::string classDatabaseName;
-
-    int learningMode;
-
-    std::string traindatalist;
-    std::string testdatalist;
-    int negMode;
-
-    double pnRatio;
-
-    double acPatchRatio;
-    double mindist;
-    double maxdist;
-
-    int nOfTrials;
-
-    int crossVMode;
-
-    std::string negFolderList;
-
-private:
-    boost::property_tree::ptree pt;
-
-};
+void normarizationByDepth(CPatch &patch,const CConfig &conf);
 
 class databaseNode{
 public:
@@ -184,6 +84,7 @@ private:
     static boost::lagged_fibonacci1279 gen;
 };
 
+void loadTrainObjFile(CConfig conf, std::vector<CPosDataset> &posSet);
 void loadTrainPosFile(CConfig conf, std::vector<CPosDataset> &posSet);//, boost::mt19937 &gen);
 void loadTrainNegFile(CConfig conf, std::vector<CNegDataset> &negSet);
 //void loadTestFile(CConfig conf, std::vector<CTestDataset> &testSet);

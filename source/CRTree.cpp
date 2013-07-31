@@ -1,14 +1,22 @@
 #include "CRTree.h"
 
+//#include <boost/timer.hpp>
+
 using namespace std;
 boost::lagged_fibonacci1279 CRTree::genTree = boost::lagged_fibonacci1279();
 
-void CRTree::calcHaarLikeFeature(const cv::Mat &patch, const int* test, int &p1, int &p2) const{
+void CRTree::calcHaarLikeFeature(const cv::Mat &patch, const int* test, double &p1, double &p2) const{
     float m[6];
-
     int angle = test[0];
+    double t1,t2,t3,t4;
 
-    cv::Mat showMat(patch.rows, patch.cols, CV_8U);
+//    for(int i = 0; i < 8; ++i)
+//        std::cout << test[i] << " ";
+//    std::cout << std::endl;
+
+
+    //boost::timer t;
+    //cv::Mat showMat(patch.rows, patch.cols, CV_8U);
 
     //    std::cout << angle << std::endl;
     //    patch.convertTo(showMat, CV_8U, 255.0/ 1000.0);
@@ -16,11 +24,21 @@ void CRTree::calcHaarLikeFeature(const cv::Mat &patch, const int* test, int &p1,
     //    cv::imshow("test", showMat);
     //    cv::waitKey(0);
 
-    cv::Mat affine = cv::getRotationMatrix2D(cv::Point(config.p_width / 2 + 1, config.p_height / 2 + 1), (float)test[0] /*/ 180 * CV_PI*/, 1.0);
-    cv::Mat rotatedMat(patch.rows, patch.cols, patch.type());
+    //    cv::Mat affine = cv::getRotationMatrix2D(cv::Point(config.p_width / 2 + 1,
+    //                               config.p_height / 2 + 1),
+    //                         (float)test[0], 1.0);
+    //    cv::Mat rotatedMat(patch.rows, patch.cols, patch.type());
+    //    cv::warpAffine(patch, rotatedMat, affine, cv::Size(patch.cols, patch.rows));
 
-    cv::warpAffine(patch, rotatedMat, affine, cv::Size(patch.cols, patch.rows));
+    //    cv::Mat convertedDepth = cv::Mat(rotatedMat.rows, rotatedMat.cols, CV_8U);
+    //    cv::Mat integralMat = cv::Mat(rotatedMat.rows + 1, rotatedMat.cols+1, CV_32F);
+    //    cv::Mat temp1,temp2;
+    //    rotatedMat.convertTo(convertedDepth,CV_8U,255.0/(double)(config.maxdist - config.mindist));
 
+    //cv::integral(convertedDepth,integralMat,temp1,temp2,CV_32F);
+
+    //std::cout << "calc haar like fearutre " << t.elapsed() << " sec" << std::endl;
+    
     //    rotatedMat.convertTo(showMat, CV_8U, 255.0/ 1000.0);
 
     //    cv::imshow("test", showMat);
@@ -36,66 +54,214 @@ void CRTree::calcHaarLikeFeature(const cv::Mat &patch, const int* test, int &p1,
 
     switch(test[1]){
     case 0:
+    {
         // edge feature
-        for(int i = 0; i < rotatedMat.rows; ++i){
-            for(int j = 0; j < rotatedMat.cols; ++j)
-                if(i < rotatedMat.rows * test[2] / 100){
-                    p1 += rotatedMat.at<ushort>(i, j);
-                    s1++;
-                }else{
-                    p2 += rotatedMat.at<ushort>(i, j);
-                    s2++;
-                }
-        }
-        break;
+        //std::cout << "haittayo" << std::endl;
 
+        p1 = patch.at<double>(patch.rows - 1, (patch.cols - 1) * (double)test[2] / 100.0)
+                - (patch.at<double>(0, (patch.cols - 1 ) * (double)test[2] / 100.0)
+                + patch.at<double>(patch.rows - 1, 0))
+                + patch.at<double>(0,0);
+        //        p2 = patch.at<double>(patch.rows - 1, patch.cols - 1)
+        //                - (patch.at<double>(0, patch.cols - 1)
+        //                + patch.at<double>(patch.rows - 1, (patch.cols - 1) * (double)test[2] / 100.0))
+        //                + patch.at<double>(0, (patch.cols - 1 ) * (double)test[2] / 100.0);
+        t1 = patch.at<double>(patch.rows - 1, patch.cols - 1)
+                - (patch.at<double>(patch.rows - 1, 0)
+                   + patch.at<double>(0, patch.cols - 1))
+                + patch.at<double>(0,0);
+
+        p2 = t1 - p1;
+
+        //std::cout << patch.at<double>(patch.rows - 1, (patch.cols - 1) * (double)test[2] / 100.0) << std::endl;
+
+        s1 = patch.rows * patch.cols * (double)test[2] / 100.0;
+        s2 = patch.rows * patch.cols * (1.0 - (double)test[2] / 100.0);
+
+        //        for(int i = 0; i < patch.rows; ++i){
+        //            for(int j = 0; j < patch.cols; ++j)
+        //                if(i < patch.rows * (double)test[2] / 100){
+        //                    p1 += patch.at<ushort>(i, j);
+        //                    s1++;
+        //                }else{
+        //                    p2 += patch.at<ushort>(i, j);
+        //                    s2++;
+        //                }
+        //        }
+        break;
+    }
     case 1:
         // line feature
-        for(int i = 0; i < rotatedMat.rows; ++i){
-            for(int j = 0; j < rotatedMat.cols; ++j)
-                if(i < rotatedMat.rows * test[2] / 100 / 2 || i > rotatedMat.rows - rotatedMat.rows * test[2] / 100 / 2){
-                    p1 += rotatedMat.at<ushort>(i, j);
-                    s1++;
-                }else{
-                    p2 += rotatedMat.at<ushort>(i, j);
-                    s2++;
-                }
-        }
+        //        t1 = integralMat.at<double>(patch.rows, patch.cols * (double)test[2] / 200.0);
+        //        t2 = integralMat.at<double>(patch.rows, patch.cols * (1- (double)test[2] / 200.0));
+        //        p1 = t2 - t1;
+        //        p2 = integralMat.at<double>(patch.rows, patch.cols) - p1;
+        t1 = patch.at<double>(patch.rows - 1, patch.cols - 1)
+                - (patch.at<double>(patch.rows - 1, 0)
+                   + patch.at<double>(0, patch.cols - 1))
+                + patch.at<double>(0,0);
+        t2 = patch.at<double>((patch.rows - 1),  (1 - (double)test[2] / 200.0) * (patch.cols - 1))
+                - (patch.at<double>(0, (patch.cols - 1) * (1 - (double)test[2] / 200.0))
+                + (patch.at<double>(patch.rows - 1, (patch.cols - 1) * ((double)test[2] / 200.0 ))))
+                + patch.at<double>(0, (patch.cols - 1) * ((double)test[2] / 200.0 ));
+
+        p2 = t2;
+        p1 = t1 - t2;
+
+        s1 = patch.rows * patch.cols * (double)test[2] / 100.0;
+        s2 = patch.rows * patch.cols * (1.0 - (double)test[2] / 100.0);
+
+        //        for(int i = 0; i < patch.rows; ++i){
+        //            for(int j = 0; j < patch.cols; ++j)
+        //                if(i < patch.rows * (double)test[2] / 100 / 2 || i > patch.rows - patch.rows * (double)test[2] / 100 / 2){
+        //                    p1 += patch.at<ushort>(i, j);
+        //                    s1++;
+        //                }else{
+        //                    p2 += patch.at<ushort>(i, j);
+        //                    s2++;
+        //                }
+        //        }
 
         break;
 
     case 2:
+    {
         // center
-        for(int i = 0; i < rotatedMat.rows; ++i){
-            for(int j = 0; j < rotatedMat.cols; ++j){
-                //std::cout << i << " " << j << std::endl;
-                //std::cout << rotatedMat.rows * test[2] / 100 / 2 << " " << rotatedMat.rows - rotatedMat.rows * test[2] / 100 / 2 << " " << rotatedMat.cols * test[2] / 100 / 2 << " " << rotatedMat.cols - rotatedMat.cols * test[2] / 100 / 2 << std::endl;
-                if(i < rotatedMat.rows * test[2] / 100 / 2 || i > rotatedMat.rows - rotatedMat.rows * test[2] / 100 / 2 || j < rotatedMat.cols * test[2] / 100 / 2 || j > rotatedMat.cols - rotatedMat.cols * test[2] / 100 / 2){
-                    p1 += rotatedMat.at<ushort>(i, j);
-                    s1++;
-                }else{
-                    p2 += rotatedMat.at<ushort>(i, j);
-                    s2++;
-                }
-            }
+        int all = patch.at<double>(patch.rows - 1, patch.cols - 1)
+                - (patch.at<double>(patch.rows - 1, 0)
+                   + patch.at<double>(0, patch.cols - 1))
+                + patch.at<double>(0,0);
+        t1 = patch.at<double>((patch.rows - 1) * (double)test[2] / 200.0, (patch.cols - 1) * (double)test[2] / 200.0);
+        t2 = patch.at<double>((patch.rows - 1) * (double)test[2] / 200.0, (patch.cols - 1) * (1.0 - (double)test[2] / 200.0));
+        t3 = patch.at<double>((patch.rows - 1) * (1.0 - (double)test[2] / 200.0), (patch.cols - 1) * (double)test[2] / 200.0);
+        t4 = patch.at<double>((patch.rows - 1) * (1.0 - (double)test[2] / 200.0), (patch.cols - 1) * (1.0 - (double)test[2] / 200.0));
+        p1 = t4 + t1 - t2 - t3;
+        //std::cout << all << " " <<  t1 << " " << t2 << " " << t3 << " " << t4 << " " << (patch.rows - 1) * (1.0 - (double)test[2] / 200.0) << " " <<  (patch.cols - 1) * ( (double)test[2] / 200.0) << std::endl;
+        p2 = all - p1;
 
-        }
+
+
+        s1 = patch.rows * patch.cols * (double)test[2] / 100.0;
+        s2 = patch.rows * patch.cols - s1;
+
+        //        for(int i = 0; i < patch.rows; ++i){
+        //            for(int j = 0; j < patch.cols; ++j){
+        //                //std::cout << i << " " << j << std::endl;
+        //                //std::cout << patch.rows * (double)test[2] / 100 / 2 << " " << patch.rows - patch.rows * (double)test[2] / 100 / 2 << " " << patch.cols * (double)test[2] / 100 / 2 << " " << patch.cols - patch.cols * (double)test[2] / 100 / 2 << std::endl;
+        //                if(i < patch.rows * (double)test[2] / 100 / 2 || i > patch.rows - patch.rows * (double)test[2] / 100 / 2 || j < patch.cols * (double)test[2] / 100 / 2 || j > patch.cols - patch.cols * (double)test[2] / 100 / 2){
+        //                    p1 += patch.at<ushort>(i, j);
+        //                    s1++;
+        //                }else{
+        //                    p2 += patch.at<ushort>(i, j);
+        //                    s2++;
+        //                }
+        //            }
+
+        //        }
+        break;
+    }
+
+    case 3:
+    {
+        // edge feature
+        //std::cout << "haittayo" << std::endl;
+
+        p1 = patch.at<double>((patch.rows - 1) * (double)test[2] / 100.0, patch.cols - 1)
+                - (patch.at<double>(0, (patch.cols - 1 ))
+                   + patch.at<double>((patch.rows - 1) * (double)test[2] / 100.0, 0))
+                + patch.at<double>(0,0);
+        //        p2 = patch.at<double>(patch.rows - 1, patch.cols - 1)
+        //                - (patch.at<double>(0, patch.cols - 1)
+        //                + patch.at<double>(patch.rows - 1, (patch.cols - 1) * (double)test[2] / 100.0))
+        //                + patch.at<double>(0, (patch.cols - 1 ) * (double)test[2] / 100.0);
+        t1 = patch.at<double>(patch.rows - 1, patch.cols - 1)
+                - (patch.at<double>(patch.rows - 1, 0)
+                   + patch.at<double>(0, patch.cols - 1))
+                + patch.at<double>(0,0);
+
+        p2 = t1 - p1;
+
+        //std::cout << patch.at<double>(patch.rows - 1, (patch.cols - 1) * (double)test[2] / 100.0) << std::endl;
+
+        s1 = patch.rows * patch.cols * (double)test[2] / 100.0;
+        s2 = patch.rows * patch.cols * (1.0 - (double)test[2] / 100.0);
+
+        //        for(int i = 0; i < patch.rows; ++i){
+        //            for(int j = 0; j < patch.cols; ++j)
+        //                if(i < patch.rows * (double)test[2] / 100){
+        //                    p1 += patch.at<ushort>(i, j);
+        //                    s1++;
+        //                }else{
+        //                    p2 += patch.at<ushort>(i, j);
+        //                    s2++;
+        //                }
+        //        }
+        break;
+    }
+    case 4:
+        // line feature
+        //        t1 = integralMat.at<double>(patch.rows, patch.cols * (double)test[2] / 200.0);
+        //        t2 = integralMat.at<double>(patch.rows, patch.cols * (1- (double)test[2] / 200.0));
+        //        p1 = t2 - t1;
+        //        p2 = integralMat.at<double>(patch.rows, patch.cols) - p1;
+        t1 = patch.at<double>(patch.rows - 1, patch.cols - 1)
+                - (patch.at<double>(patch.rows - 1, 0)
+                   + patch.at<double>(0, patch.cols - 1))
+                + patch.at<double>(0,0);
+        t2 = patch.at<double>((1.0 - (double)test[2] / 200.0) *(patch.rows - 1),   patch.cols - 1)
+                - (patch.at<double>((patch.rows - 1)* ((double)test[2] / 200.0), (patch.cols - 1) )
+                + (patch.at<double>((patch.rows - 1)* (1.0 - (double)test[2] / 200.0 ), (patch.cols - 1) )))
+                + patch.at<double>((patch.rows - 1)* ((double)test[2] / 200.0), 0);
+
+        p2 = t2;
+        p1 = t1 - t2;
+
+        s1 = patch.rows * patch.cols * (double)test[2] / 100.0;
+        s2 = patch.rows * patch.cols * (1.0 - (double)test[2] / 100.0);
+
+        //        for(int i = 0; i < patch.rows; ++i){
+        //            for(int j = 0; j < patch.cols; ++j)
+        //                if(i < patch.rows * (double)test[2] / 100 / 2 || i > patch.rows - patch.rows * (double)test[2] / 100 / 2){
+        //                    p1 += patch.at<ushort>(i, j);
+        //                    s1++;
+        //                }else{
+        //                    p2 += patch.at<ushort>(i, j);
+        //                    s2++;
+        //                }
+        //        }
 
         break;
+
     default:
         break;
     }
 
-    //std::cout << test[0] << " " << test[1] << " " << test[2] << std::endl;
-    //std::cout << p1 << " " << p2 << " " << s1 << " " << s2 << std::endl;
+    //    if(p1 == 0 || p2 == 0){
+    //        cv::namedWindow("test");
+    //        cv::imshow("test", patch);
+    //        cv::waitKey(0);
+    //        cv::destroyWindow("test");
+    //    }
+    //    if(test[8] == 3){
+    //    std::cout << test[0] << " " << test[1] << " " << (double)test[2] << std::endl;
+    //    std::cout << p1 << " " << p2 << " " << s1 << " " << s2 << std::endl;
+    //            std::cout << patch << std::endl;
+    //    }
     if(s1 == 0 || s2 == 0){
-        std::cout << "error! can't get enouch space for haar-like feature" << std::endl;
+        std::cout << "error! can't get enough space for haar-like feature" << std::endl;
+        std::cout << s1 << " " << s2 << std::endl;
+
+            for(int i = 0; i < 8; ++i)
+                std::cout << test[i] << " ";
+            std::cout << std::endl;
+
         exit(-1);
     }else{
-        p1 /= s1;
-        p2 /= s2;
+        p1 /= (double)s1;
+        p2 /= (double)s2;
     }
 
+    // std::cout << "p1 = " << p1 << " p2 = " << p2 << std::endl;
     return;
 }
 
@@ -103,7 +269,7 @@ const LeafNode* CRTree::regression(CTestPatch &patch) const {
     // pointer to current node
     const int* pnode = &treetable[0];
     int node = 0;
-    int p1,p2;
+    double p1,p2;
 
     // Go through tree until one arrives at a leaf, i.e. pnode[0]>=0)
     while(pnode[0]==-1) {
@@ -114,19 +280,31 @@ const LeafNode* CRTree::regression(CTestPatch &patch) const {
         // pointer to channel
         //uchar* ptC = ptFCh[pnode[5]];
 
+        cv::Mat ptC;
+
+
+//        if(config.learningMode != 2)
+//            normarizationByDepth(&patch,ptC);
+
         cv::Mat tempFeture = *patch.getFeature(pnode[9]);
-        cv::Mat ptC = tempFeture(patch.getRoi());
+        ptC = tempFeture(patch.getRoi());
 
-        normarizationByDepth(&patch,ptC);
 
-//        for(int i = 0; i < 11; ++i)
-//            std::cout << pnode[i] << " ";
-//        std::cout << std::endl;
+
+        //        for(int i = 0; i < 11; ++i)
+        //            std::cout << pnode[i] << " ";
+        //        std::cout << std::endl;
 
 
         //std::cout << ptC << std::endl;
 
-        if(pnode[9] == 32){
+        if(pnode[9] < patch.getFeatureNum() - 1 && config.rgbFeature != 1){
+            int regTest[9];
+            for(int i = 0; i < 9; ++i)
+                regTest[i] = pnode[i + 1];
+            calcHaarLikeFeature(ptC,regTest,p1,p2);
+
+        }else if(pnode[9] == patch.getFeatureNum() - 1){
 
             int regTest[9];
             for(int i = 0; i < 9; ++i)
@@ -135,8 +313,8 @@ const LeafNode* CRTree::regression(CTestPatch &patch) const {
 
         }else{
             // get pixel values
-            p1 = (int)ptC.at<uchar>(pnode[2], pnode[1]);//*(ptC+pnode[1]+pnode[2]*stepImg);
-            p2 = (int)ptC.at<uchar>(pnode[6], pnode[5]);//*(ptC+pnode[3]+pnode[4]*stepImg);
+            p1 = (double)ptC.at<uchar>(pnode[2], pnode[1]);//*(ptC+pnode[1]+pnode[2]*stepImg);
+            p2 = (double)ptC.at<uchar>(pnode[6], pnode[5]);//*(ptC+pnode[3]+pnode[4]*stepImg);
         }
         // test
         bool test = ( p1 - p2 ) >= pnode[10];
@@ -154,7 +332,7 @@ const LeafNode* CRTree::regression(CTestPatch &patch) const {
 
 // Read tree from file
 CRTree::CRTree(const char* filename, const char* databaseName,CConfig &conf):config(conf) {
-    cout << "Load Tree " << filename << endl;
+    //cout << "Load Tree " << filename << endl;
 
     classDatabase.read(databaseName);
 
@@ -164,7 +342,7 @@ CRTree::CRTree(const char* filename, const char* databaseName,CConfig &conf):con
     if(in.is_open()) {
         // allocate memory for tree table
         in >> max_depth;
-        std::cout << "max depth: " << max_depth << std::endl;
+        //std::cout << "max depth: " << max_depth << std::endl;
         num_nodes = (int)pow(2.0,int(max_depth+1))-1;
         // num_nodes x 7 matrix as vector
         treetable = new int[num_nodes * 11];
@@ -174,7 +352,7 @@ CRTree::CRTree(const char* filename, const char* databaseName,CConfig &conf):con
         in >> num_leaf;
         leaf = new LeafNode[num_leaf];
 
-        std::cout << "number of leaf: " << num_leaf << std::endl;
+        //std::cout << "number of leaf: " << num_leaf << std::endl;
 
         // number of center points per patch
         in >> num_cp;
@@ -188,8 +366,8 @@ CRTree::CRTree(const char* filename, const char* databaseName,CConfig &conf):con
         }
 
         // this is for debug
-//        std::vector<double> pfgSum(3,0.);
-//        std::vector<int> voteSum(3,0);
+        //        std::vector<double> pfgSum(3,0.);
+        //        std::vector<int> voteSum(3,0);
 
         // read tree leafs
         LeafNode* ptLN = &leaf[0];
@@ -224,8 +402,8 @@ CRTree::CRTree(const char* filename, const char* databaseName,CConfig &conf):con
                 in >> containPoints;
                 //std::cout << " " << ptLN->pfg.at(cNum) << " " << containPoints << std::endl;
 
-//                pfgSum.at(cNum) += ptLN->pfg.at(cNum);
-//                voteSum.at(cNum) += containPoints;
+                //                pfgSum.at(cNum) += ptLN->pfg.at(cNum);
+                //                voteSum.at(cNum) += containPoints;
 
                 //ptLN->vCenter.at(cNum).resize(containPoints);
                 ptLN->param.at(cNum).clear();//resize(containPoints);
@@ -238,8 +416,10 @@ CRTree::CRTree(const char* filename, const char* databaseName,CConfig &conf):con
                     cv::Point tempPoint;
                     in >> tempPoint.x;
                     in >> tempPoint.y;
-                    double tempAngle;
-                    in >> tempAngle;
+                    double tempAngle[3];
+                    in >> tempAngle[0];
+                    in >> tempAngle[1];
+                    in >> tempAngle[2];
 
                     CParamset tempParam;
                     //tempParam.setClassName(tempClassName);
@@ -255,9 +435,9 @@ CRTree::CRTree(const char* filename, const char* databaseName,CConfig &conf):con
         }
 
 
-//        for(int i = 0; i < 3; i++){
-//            std::cout << pfgSum.at(i) << " " << voteSum.at(i) << std::endl;
-//        }
+        //        for(int i = 0; i < 3; i++){
+        //            std::cout << pfgSum.at(i) << " " << voteSum.at(i) << std::endl;
+        //        }
 
     } else {
         cerr << "Could not read tree: " << filename << endl;
@@ -540,7 +720,7 @@ void CRTree::makeLeaf(CTrainSet &trainSet, float pnratio, int node) {
     ++num_leaf;
 }
 
-bool CRTree::optimizeTest(CTrainSet &SetA, CTrainSet &SetB, const CTrainSet &trainSet, int* test, unsigned int iter, unsigned int measure_mode, int depth) {
+bool CRTree::optimizeTest(CTrainSet &SetA, CTrainSet &SetB, CTrainSet &trainSet, int* test, unsigned int iter, unsigned int measure_mode, int depth) {
 
     bool found = false;
 
@@ -584,7 +764,7 @@ bool CRTree::optimizeTest(CTrainSet &SetA, CTrainSet &SetB, const CTrainSet &tra
                 config.p_height,//posPatch.at(0).patchRoi.height,
                 trainSet.posPatch.at(0).getFeatureNum(),
                 depth);
-        //std::cout << tmpTest[0] << " " << tmpTest[1] << " " << tmpTest[2] << std::endl;
+        //std::cout << tmpTest[0] << " " << tmpTest[1] << " " << tmp(double)test[2] << std::endl;
 
 
         //for(int q = 0; q < 9; ++q)
@@ -627,6 +807,8 @@ bool CRTree::optimizeTest(CTrainSet &SetA, CTrainSet &SetB, const CTrainSet &tra
                 // // Split training data into two sets A,B accroding to threshold t
                 split(tmpA, tmpB, trainSet, valSet, tr);
 
+                //std::cout << "a " << tmpA.posPatch.size() << " b " << tmpB.posPatch.size() << std::endl;
+
                 // std::cout << "this is for debug " << std::endl;
                 // std::cout << "setA----------------------------------------------------" << std::endl;
                 // for(int j = 0; j < tmpA.at(0).size(); ++j)
@@ -645,6 +827,10 @@ bool CRTree::optimizeTest(CTrainSet &SetA, CTrainSet &SetB, const CTrainSet &tra
                     // Measure quality of split with measure_mode 0 - classification, 1 - regression
 
                     tmpDist = measureSet(tmpA, tmpB, depth, measure_mode);
+                    //                    std::cout << tmpDist << std::endl;
+                    //                    for(int w = 0; w < 9; ++w)
+                    //                        std::cout << tmpTest[w] << " ";
+                    //                    std::cout << std::endl;
 
                     // Take binary test with best split
                     if(tmpDist>bestDist) {
@@ -677,7 +863,7 @@ bool CRTree::optimizeTest(CTrainSet &SetA, CTrainSet &SetB, const CTrainSet &tra
 
     //    if(test[8] == 32){
     if(found)
-        for(int i = 0; i < 8; ++i){
+        for(int i = 0; i < 9; ++i){
             std::cout << test[i] << " ";
         }
     else
@@ -721,112 +907,181 @@ bool CRTree::optimizeTest(CTrainSet &SetA, CTrainSet &SetB, const CTrainSet &tra
     return found;
 }
 
-void CRTree::normarizationByDepth(const CPatch* patch,cv::Mat& rgb)const{//, const CConfig &config)const {
-    cv::Mat tempDepth = *patch->getFeature(32);
-    cv::Mat depth = tempDepth(patch->getRoi());
+//void CRTree::normarizationByDepth(CPatch* patch,cv::Mat& rgb)const{//, const CConfig &config)const {
+//    cv::Mat tempDepth = *patch->getDepth();
 
-    //                cv::namedWindow("test");
-    //                cv::imshow("test",rgb);
-    //                cv::waitKey(0);
-    //                cv::destroyAllWindows();
+//    cv::Mat depth = tempDepth(patch->getRoi());
 
-    //std::cout << trainSet.posPatch.at(i).getFeature(32)->at<uchar>(10,10) << std::endl;
+//    //std::cout << depth << std::endl;
 
-    double widthSca, heightSca;
-    widthSca = config.widthScale * (double)(depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_width;
-    heightSca = config.heightScale * (double)(depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_height;
+////    cv::namedWindow("test");
+////    cv::imshow("test",depth);
+////    cv::waitKey(0);
+////    cv::destroyAllWindows();
 
-    //std::cout << "depth : " << depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) << " widht scale : " << widthSca << " height scape : " << heightSca << std::endl;
+//    //std::cout << trainSet.posPatch.at(i).getFeature(32)->at<uchar>(10,10) << std::endl;
 
-    double realWindowWidth, realWindowHeight;
+//    //calc width and height scale
+//    double widthSca, heightSca;
 
-    realWindowWidth = (double)config.p_width / widthSca;
-    realWindowHeight = (double)config.p_height / heightSca;
+//    //std::cout << depth.type() << " " << CV_8U << std::endl;
+////    if(depth.type() == CV_8U){
+////        widthSca = config.widthScale * (double)(depth.at<uchar>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_width;
+////        heightSca = config.heightScale * (double)(depth.at<uchar>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_height;
+////        //std::cout << "kotti da" << std::endl;
+////        std::cout << "depth : " << (int)depth.at<uchar>(config.p_height / 2 + 1, config.p_width / 2 + 1) << " widht scale : " << widthSca << " height scape : " << heightSca << std::endl;
 
-    cv::Rect roi;
+////    }else{
+//        widthSca = config.widthScale * (double)(depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_width;
+//        heightSca = config.heightScale * (double)(depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_height;
+//        std::cout << "depth : " << depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) << " widht scale : " << widthSca << " height scape : " << heightSca << std::endl;
 
-    roi.x = (int)((config.p_width - realWindowHeight) / 2);
-    roi.y = (int)((config.p_height - realWindowWidth) / 2);
+//    //}
 
-    roi.width = (int)realWindowWidth;
-    roi.height = (int)realWindowHeight;
+//    // new window size
+//    double realWindowWidth, realWindowHeight;
 
-    rgb = rgb(roi);
-    cv::resize(rgb,rgb,cv::Size(config.p_width,config.p_height));
+//    realWindowWidth = (double)config.p_width / widthSca;
+//    realWindowHeight = (double)config.p_height / heightSca;
+
+//    //std::cout << "w " << realWindowWidth << " h " << realWindowHeight << std::endl;
+
+//    cv::Rect roi;
+
+//    roi.x = patch->getRoi().x + (int)((config.p_width - realWindowHeight) / 2);
+//    roi.y = patch->getRoi().y + (int)((config.p_height - realWindowWidth) / 2);
+
+//    roi.width = (int)realWindowWidth;
+//    roi.height = (int)realWindowHeight;
+
+//    //std::cout << roi.x << " " << roi.y << " " << roi.width << " "<< roi.height << std::endl;
+
+//    //std::cout << depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) << std::endl;
+//    //std::cout << roi << std::endl;
+
+//    if(roi.x < 0) roi.x = 0;
+//    if(roi.y < 0) roi.y = 0;
+//    if(roi.x + roi.width > patch->getDepth()->cols) roi.x -= roi.width;
+//    if(roi.y + roi.height > patch->getDepth()->rows) roi.y -= roi.height;
+
+//    //rgb = rgb(roi);
+//    patch->setRoi(roi);
+//    //cv::resize(rgb,rgb,cv::Size(config.p_width,config.p_height));
 
 
-    //                cv::namedWindow("test");
-    //                cv::imshow("test",rgb);
-    //                cv::waitKey(0);
-    //                cv::destroyAllWindows();
-}
+//    //                cv::namedWindow("test");
+//    //                cv::imshow("test",rgb);
+//    //                cv::waitKey(0);
+//    //                cv::destroyAllWindows();
+//}
 
-void CRTree::evaluateTest(std::vector<std::vector<IntIndex> >& valSet, const int* test, const CTrainSet &trainSet) {
+void CRTree::evaluateTest(std::vector<std::vector<IntIndex> >& valSet, const int* test, CTrainSet &trainSet) {
 
     // for(int m = 0; m < 6; ++m)
     //   std::cout << test[m] << ", ";
     // std::cout << std::endl;
 
-    int p1, p2;
+    double p1, p2;
 
     valSet.clear();
     valSet.resize(2);
+
+    //std::cout << "pos" << std::endl;
 
     //for(unsigned int l = 0; l < TrainSet.size(); ++l)
     {
         valSet[0].resize(trainSet.posPatch.size());
         for(unsigned int i=0;i<trainSet.posPatch.size();++i) {
+            cv::Mat ptC;
+
+
 
             // pointer to channel
             cv::Mat tempMat = *trainSet.posPatch.at(i).getFeature(test[8]);
-            cv::Mat ptC = tempMat(trainSet.posPatch.at(i).getRoi());//(*(TrainSet[l][i].patch[test[8]]))(TrainSet[l][i].patchRoi);
 
-            normarizationByDepth(&(trainSet.posPatch.at(i)) ,ptC);
+            //std::cout << "test[8] = " << test[8] << std::endl;
 
-            if(test[8] == 32){
+            //std::cout << "ROI = " << trainSet.posPatch.at(i).getRoi().x << " " << trainSet.posPatch.at(i).getRoi().y << " " << trainSet.posPatch.at(i).getRoi().width << " " << trainSet.posPatch.at(i).getRoi().height << std::endl;
 
-                //std::cout << "yobareatyo" << std::endl;
+
+
+            //std::cout << trainSet.posPatch.at(i).getRoi() << std::endl;
+            ptC = tempMat(trainSet.posPatch.at(i).getRoi());//(*(TrainSet[l][i].patch[test[8]]))(TrainSet[l][i].patchRoi);
+
+//            std::cout << ptC << std::endl;
+
+//            cv::namedWindow("test");
+//            cv::imshow("test", ptC);
+//            cv::waitKey(0);
+//            cv::destroyWindow("test");
+
+            //std::cout << "test[8] " << test[8] << " featureNum " << trainSet.posPatch.at(i).getFeatureNum() - 1 << std::endl;
+            if( (test[8] < trainSet.posPatch.at(i).getFeatureNum() - 1 && config.rgbFeature != 1) || test[8] == trainSet.posPatch.at(i).getFeatureNum() - 1){
+
                 calcHaarLikeFeature(ptC,test,p1,p2);
-                //std::cout << "this is for debug hyahhaaaaaaaaaaaaaaaaaaaa" << std::endl;
-                //int dummy;
-                //std::cin >> dummy;
-                //                p1 = 0;
-                //                p2 = 0;
-                //                for(int j = 0;j < test[2]; ++j){
-                //                    for(int k = 0; k < test[3]; ++k)
-                //                        p1 += (int)ptC.at<uchar>(k + test[1],j +  test[0]);
-                //                }
+//            }else if(test[8] == trainSet.posPatch.at(i).getFeatureNum() - 1){
 
-                //                for(int j = 0;j < test[6]; ++j){
-                //                    for(int k = 0; k < test[7]; ++k)
-                //                        p2 += (int)ptC.at<uchar>(k + test[5],j +  test[4]);
-                //                }
+//                //std::cout << "yobareatyo" << std::endl;
+//                calcHaarLikeFeature(ptC,test,p1,p2);
+//                //std::cout << "this is for debug hyahhaaaaaaaaaaaaaaaaaaaa" << std::endl;
+//                //int dummy;
+//                //std::cin >> dummy;
+//                //                p1 = 0;
+//                //                p2 = 0;
+//                //                for(int j = 0;j < test[2]; ++j){
+//                //                    for(int k = 0; k < test[3]; ++k)
+//                //                        p1 += (int)ptC.at<uchar>(k + test[1],j +  test[0]);
+//                //                }
 
-                //std::cout << p1 << " " << p2 << std::endl;
+//                //                for(int j = 0;j < test[6]; ++j){
+//                //                    for(int k = 0; k < test[7]; ++k)
+//                //                        p2 += (int)ptC.at<uchar>(k + test[5],j +  test[4]);
+//                //                }
+
+//                //                for(int w = 0; w < 9; ++w)
+//                //                    std::cout << test[w] << " ";
+//                //                std::cout << std::endl;
+//                //                std::cout << p1 << " " << p2 << std::endl;
+
 
             }else{
                 // get pixel values
-                p1 = (int)ptC.at<uchar>(test[1], test[0]);
-                p2 = (int)ptC.at<uchar>(test[5], test[4]);
+                p1 = (double)ptC.at<uchar>(test[1], test[0]);
+                p2 = (double)ptC.at<uchar>(test[5], test[4]);
             }
-            valSet[0][i].val = p1 - p2;
+
+            valSet[0][i].val = (int)(p1 - p2);
             valSet[0][i].index = i;
+
+
+
         }
 
         sort( valSet[0].begin(), valSet[0].end() , IntIndex::lessVal);
     }
 
+    //std::cout << "neg" << std::endl;
+
     {
         valSet[1].resize(trainSet.negPatch.size());
+
         for(unsigned int i=0;i<trainSet.negPatch.size();++i) {
+            cv::Mat ptC;
+
+//            if(config.learningMode != 2)
+//                normarizationByDepth(&(trainSet.negPatch.at(i)) ,ptC);
 
             // pointer to channel
             cv::Mat tempMat = *trainSet.negPatch.at(i).getFeature(test[8]);
-            cv::Mat ptC = tempMat(trainSet.negPatch.at(i).getRoi());
+            ptC = tempMat(trainSet.negPatch.at(i).getRoi());
 
-            normarizationByDepth(&(trainSet.negPatch.at(i)) ,ptC);
+
             //cv::Mat ptC = (*(TrainSet[l][i].patch[test[8]]))(TrainSet[l][i].patchRoi);
-            if(test[8] == 32){
+
+            if(test[8] < trainSet.negPatch.at(i).getFeatureNum() - 1 && config.rgbFeature != 1){
+
+                calcHaarLikeFeature(ptC,test,p1,p2);
+            }else if(test[8] == trainSet.negPatch.at(i).getFeatureNum() - 1){
                 //std::cout << "this is for debug hyahhaaaaaaaaaaaaaaaaaaaa" << std::endl;
                 //int dummy;
                 //std::cin >> dummy;
@@ -844,12 +1099,23 @@ void CRTree::evaluateTest(std::vector<std::vector<IntIndex> >& valSet, const int
 
                 calcHaarLikeFeature(ptC,test,p1,p2);
 
+                //std::cout << p1 << " " << p2 << std::endl;
+
+                //                for(int w = 0; w < 9; ++w)
+                //                    std::cout << test[w] << " ";
+                //                std::cout << std::endl;
+                //                std::cout << p1 << " " << p2 << std::endl;
+
+
             }else{
                 // get pixel values
-                p1 = (int)ptC.at<uchar>(test[1], test[0]);
-                p2 = (int)ptC.at<uchar>(test[5], test[4]);
+                p1 = (double)ptC.at<uchar>(test[1], test[0]);
+                p2 = (double)ptC.at<uchar>(test[5], test[4]);
             }
-            valSet[1][i].val = p1 - p2;
+
+
+
+            valSet[1][i].val = (int)(p1 - p2);
             valSet[1][i].index = i;
         }
 
@@ -942,6 +1208,9 @@ double CRTree::distMean(const std::vector<CPosPatch>& SetA, const std::vector<CP
 
     std::vector<double> meanAx(nclass,0);
     std::vector<double> meanAy(nclass,0);
+    std::vector<double> meanAroll(nclass, 0);
+    std::vector<double> meanApitch(nclass, 0);
+    std::vector<double> meanAyaw(nclass, 0);
     //for(std::vector<CPatch>::const_iterator it = SetA.begin(); it != SetA.end(); ++it) {
 
 
@@ -949,6 +1218,9 @@ double CRTree::distMean(const std::vector<CPosPatch>& SetA, const std::vector<CP
         //for(unsigned int c = 0; c<nclass; ++c) {
         meanAx[classDatabase.search(SetA.at(i).getClassName())] += SetA.at(i).getCenterPoint().x;
         meanAy[classDatabase.search(SetA.at(i).getClassName())] += SetA.at(i).getCenterPoint().y;
+        meanAroll[classDatabase.search(SetA.at(i).getClassName())] += SetA.at(i).getParam().getAngle()[0];
+        meanApitch[classDatabase.search(SetA.at(i).getClassName())] += SetA.at(i).getParam().getAngle()[1];
+        meanAyaw[classDatabase.search(SetA.at(i).getClassName())] += SetA.at(i).getParam().getAngle()[2];
         //}
     }
 
@@ -956,6 +1228,9 @@ double CRTree::distMean(const std::vector<CPosPatch>& SetA, const std::vector<CP
     for(int c = 0; c < nclass; ++c){
         meanAx[c] /= (double)SetA.size();
         meanAy[c] /= (double)SetA.size();
+        meanAroll[c] /= (double)SetA.size();
+        meanApitch[c] /= (double)SetA.size();
+        meanAyaw[c] /= (double)SetA.size();
     }
     //}
 
@@ -965,18 +1240,35 @@ double CRTree::distMean(const std::vector<CPosPatch>& SetA, const std::vector<CP
         //for(unsigned int c = 0; c<num_cp; ++c) {
         double tmp = SetA.at(i).getCenterPoint().x - meanAx[classDatabase.search(SetA.at(i).getClassName())];
         distA[classDatabase.search(SetA.at(i).getClassName())] += tmp*tmp;
+
         tmp = SetA.at(i).getCenterPoint().y - meanAy[classDatabase.search(SetA.at(i).getClassName())];
         distA[classDatabase.search(SetA.at(i).getClassName())] += tmp*tmp;
+
+        tmp = SetA.at(i).getParam().getAngle()[0] - meanAroll[classDatabase.search(SetA.at(i).getClassName())];
+        distA[classDatabase.search(SetA.at(i).getClassName())] += tmp*tmp;
+
+        tmp = SetA.at(i).getParam().getAngle()[1] - meanApitch[classDatabase.search(SetA.at(i).getClassName())];
+        distA[classDatabase.search(SetA.at(i).getClassName())] += tmp*tmp;
+
+        tmp = SetA.at(i).getParam().getAngle()[2] - meanAyaw[classDatabase.search(SetA.at(i).getClassName())];
+        distA[classDatabase.search(SetA.at(i).getClassName())] += tmp*tmp;
+
         //}
     }
 
     std::vector<double> meanBx(nclass,0);
     std::vector<double> meanBy(nclass,0);
+    std::vector<double> meanBroll(nclass,0);
+    std::vector<double> meanBpitch(nclass,0);
+    std::vector<double> meanByaw(nclass,0);
     //for(std::vector<CPatch>::const_iterator it = SetB.begin(); it != SetB.end(); ++it) {
     for(int i = 0; i < SetB.size(); ++i){
         //for(unsigned int c = 0; c<num_cp; ++c) {
         meanBx[classDatabase.search((SetB.at(i).getClassName()))] += SetB.at(i).getCenterPoint().x;
         meanBy[classDatabase.search((SetB.at(i).getClassName()))] += SetB.at(i).getCenterPoint().y;
+        meanBroll[classDatabase.search((SetB.at(i).getClassName()))] += SetB.at(i).getParam().getAngle()[0];
+        meanBpitch[classDatabase.search((SetB.at(i).getClassName()))] += SetB.at(i).getParam().getAngle()[1];
+        meanByaw[classDatabase.search((SetB.at(i).getClassName()))] += SetB.at(i).getParam().getAngle()[2];
         //}
     }
 
@@ -985,6 +1277,9 @@ double CRTree::distMean(const std::vector<CPosPatch>& SetA, const std::vector<CP
         //for(unsigned int c = 0; c<num_cp; ++c) {
         meanBx[c] /= (double)SetB.size();
         meanBy[c] /= (double)SetB.size();
+        meanBroll[c] /= (double)SetB.size();
+        meanBpitch[c] /= (double)SetB.size();
+        meanByaw[c] /= (double)SetB.size();
         //}
     }
 
@@ -994,6 +1289,10 @@ double CRTree::distMean(const std::vector<CPosPatch>& SetA, const std::vector<CP
         double tmp = (*it).getCenterPoint().x - meanBx[classDatabase.search(it->getClassName())];//(*it).classNum];
         distB[classDatabase.search(it->getClassName())] += tmp*tmp;
         tmp = (*it).getCenterPoint().y - meanBy[classDatabase.search(it->getClassName())];
+        distB[classDatabase.search(it->getClassName())] += tmp*tmp;
+        tmp = (*it).getParam().getAngle()[0] - meanBroll[classDatabase.search(it->getClassName())];
+        tmp = (*it).getParam().getAngle()[1] - meanBpitch[classDatabase.search(it->getClassName())];
+        tmp = (*it).getParam().getAngle()[2] - meanByaw[classDatabase.search(it->getClassName())];
         distB[classDatabase.search(it->getClassName())] += tmp*tmp;
         //}
     }

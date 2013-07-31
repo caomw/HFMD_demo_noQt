@@ -1,371 +1,69 @@
 #include "util.h"
 
 boost::lagged_fibonacci1279 nCk::gen = boost::lagged_fibonacci1279();
+boost::lagged_fibonacci1279 genPose = boost::lagged_fibonacci1279();
 
-int CConfig::loadConfig(const char* filename)
+float calcSumOfDepth(cv::Mat &depth, const CConfig &conf){
+    cv::Mat convertedDepth = cv::Mat(depth.rows, depth.cols, CV_8U);
+    cv::Mat integralMat = cv::Mat(depth.rows + 1, depth.cols+1, CV_32F);
+    cv::Mat temp1,temp2;
+    depth.convertTo(convertedDepth,CV_8U,255.0/(double)(conf.maxdist - conf.mindist));
+
+//    cv::namedWindow("test");
+//    cv::imshow("test",convertedDepth);
+//    cv::waitKey(0);
+//    cv::destroyWindow("test");
+
+    cv::integral(convertedDepth,integralMat,temp1,temp2,CV_32F);
+    return integralMat.at<int>(depth.rows, depth.cols);
+}
+
+void loadTrainObjFile(CConfig conf, std::vector<CPosDataset> &posSet)
 {
-    read_xml(filename, pt);
+    std::vector<std::string> modelPath(0);
+    std::vector<std::string> modelName(0);
+    std::string trainModelListPath = conf.modelListFolder + PATH_SEP + conf.modelListName;
 
-    // load tree path
-    treepath = *(pt.get_optional<std::string>("root.treepath"));
-
-    // load number of tree
-    ntrees = *pt.get_optional<int>("root.ntree");
-
-    // load patch width
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.pwidth")) {
-        std::cout << integer << std::endl;
-        p_width = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load patch height
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.pheight")) {
-        std::cout << integer << std::endl;
-        p_height = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load test image path
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.imgpath")) {
-        std::cout << str.get() << std::endl;
-        impath = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load image name list
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.imgnamelist")) {
-        std::cout << str.get() << std::endl;
-        imfiles = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load extruct feature flag
-    if (boost::optional<bool> boolean
-            = pt.get_optional<bool>("root.efeatures")) {
-        std::cout << boolean << std::endl;
-        xtrFeature = *boolean;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load image scales
-    //std::cout << "kokomade" << std::endl;
-//    scales.resize(0);
-//    BOOST_FOREACH (const boost::property_tree::ptree::value_type& child,
-//                   pt.get_child("root.scales")) {
-//        const float value = boost::lexical_cast<float>(child.second.data());
-//        scales.push_back(value);
-
-//        std::cout << value << std::endl;
-//    }
-//    for (int i;i < scales.size(); ++i)
-//        std::cout << i << ": " << scales.at(i) << std::endl;
-//    float value_temp = 1;
-//    scales.clear();
-//    scales.push_back(value_temp);
-
-//    ratios.clear();
-//    ratios.push_back(value_temp);
-//    ratios.push_back(value_temp);
-
-    // // load image ratios
-//    ratios.resize(0);
-//    BOOST_FOREACH (const boost::property_tree::ptree::value_type& child, pt.get_child("root.ratio")) {
-//        const float value = boost::lexical_cast<float>(child.second.data());
-//        ratios.push_back(value);
-
-//        std::cout << value << std::endl;
-//    }
-//    for (int i;i < ratios.size(); ++i)
-//        std::cout << i << ": " << ratios.at(i) << std::endl;
-
-    // load output path
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.outpath")) {
-        std::cout << str.get() << std::endl;
-        outpath = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load scale factor for output imae
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.sfactor")) {
-        std::cout << integer << std::endl;
-        out_scale = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
+    boost::uniform_real<> dst(0, 360);
+    boost::variate_generator<boost::lagged_fibonacci1279&,
+            boost::uniform_real<> > rand(genPose, dst);
 
 
-    // load training image name list
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.traindataname")) {
-        std::cout << str.get() << std::endl;
-        traindatafile = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
+    posSet.clear();
+
+    std::ifstream modelList(trainModelListPath.c_str());
+    if(!modelList.is_open()){
+        std::cout << "train model list is not found!" << std::endl;
+        exit(-1);
     }
 
-    // load training image folder
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.trainimgpath")) {
-        std::cout << str.get() << std::endl;
-        trainpath = *str;
+    int modelNum = 0;
+    modelList >> modelNum;
+
+    for(int i = 0; i < modelNum; ++i){
+        std::string tempName;
+        modelList >> tempName;
+        modelPath.push_back(conf.modelListFolder +PATH_SEP + tempName);
+        std::string tempClass;
+        modelList >> tempClass;
+        modelName.push_back(tempClass);
     }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
+    for(int j = 0; j < modelNum; ++j){
+        for(int i = 0; i < conf.imagePerTree; ++i){
+            CPosDataset posTemp;
+            posTemp.setModelPath(modelPath.at(j));
+            posTemp.setClassName(modelName.at(j));
+            double tempAngle[3];
+            for(int i = 0; i < 3; ++i)
+                tempAngle[i] = rand();
+            posTemp.setAngle(tempAngle);
+            posTemp.setCenterPoint(cv::Point(320,240));
+
+            posSet.push_back(posTemp);
+        }
     }
 
-    // load scale factor for output imae
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.trainimagepertree")) {
-        std::cout << integer << std::endl;
-        imagePerTree = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load scale factor for output imae
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.minsample")) {
-        std::cout << integer << std::endl;
-        min_sample = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load scale factor for output imae
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.maxdepth")) {
-        std::cout << integer << std::endl;
-        max_depth = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load scale factor for output imae
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.featurechannel")) {
-        std::cout << integer << std::endl;
-        featureChannel = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load scale factor for output imae
-    if (boost::optional<double> variableDouble
-            = pt.get_optional<double>("root.patchratio")) {
-        std::cout << variableDouble << std::endl;
-        patchRatio = *variableDouble;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load scale factor for output imae
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.stride")) {
-        std::cout << integer << std::endl;
-        stride = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load offset of tree name
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.offTree")) {
-        std::cout << integer << std::endl;
-        off_tree = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load test data folder
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.testpath")) {
-        std::cout << str.get() << std::endl;
-        testPath = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load test data file name
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.testdataname")) {
-        std::cout << str.get() << std::endl;
-        testData = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load test data file name
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.classdatabasename")) {
-        std::cout << str.get() << std::endl;
-        classDatabaseName = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load offset of tree name
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.learningmode")) {
-        std::cout << "learning mode is " << integer << std::endl;
-        learningMode = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load training image name list
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.traindatalistname")) {
-        std::cout << str.get() << std::endl;
-        traindatalist = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load testing image name list
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.testdatalistname")) {
-        std::cout << str.get() << std::endl;
-        testdatalist = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load offset of tree name
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.testmode")) {
-        std::cout << integer << std::endl;
-        testMode = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load testing image name list
-    if (boost::optional<double> dou
-            = pt.get_optional<double>("root.detectthreshold")) {
-        std::cout << dou.get() << std::endl;
-        detectThreshold = *dou;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load offset of tree name
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.showgrandtruth")) {
-        std::cout << integer << std::endl;
-        showGT = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load training image folder
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.negativedatapath")) {
-        std::cout << str.get() << std::endl;
-        negDataPath = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load training image folder
-    if (boost::optional<std::string> str
-            = pt.get_optional<std::string>("root.negativedatalist")) {
-        std::cout << str.get() << std::endl;
-        negDataList = *str;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load offset of tree name
-    if (boost::optional<int> integer
-            = pt.get_optional<int>("root.negativemode")) {
-        std::cout << integer << std::endl;
-        negMode = *integer;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load testing image name list
-    if (boost::optional<double> dou
-            = pt.get_optional<double>("root.posnegpatchratio")) {
-        std::cout << dou.get() << std::endl;
-        pnRatio = *dou;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load testing image name list
-    if (boost::optional<double> dou
-            = pt.get_optional<double>("root.activepatchratio")) {
-        std::cout << dou.get() << std::endl;
-        acPatchRatio = *dou;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    // load testing image name list
-    if (boost::optional<double> dou
-            = pt.get_optional<double>("root.mindistance")) {
-        std::cout << dou.get() << std::endl;
-        mindist = *dou;
-    }
-    else {
-        std::cout << "root.str is nothing" << std::endl;
-    }
-
-    maxdist = *pt.get_optional<double>("root.maxdistance");
-
-    nOfTrials = *pt.get_optional<int>("root.numberOfTrials");
-
-    negFolderList = *pt.get_optional<std::string>("root.negativedatafolderlist");
-
-    //crossVMode = *pt.get_optional<int>("root.crossvalidationmode");
-
-    widthScale = p_width / mindist;
-    heightScale = p_height / mindist;
-
-    return 0;
+    modelList.close();
 }
 
 void loadTrainPosFile(CConfig conf, std::vector<CPosDataset> &posSet)
@@ -396,6 +94,7 @@ void loadTrainPosFile(CConfig conf, std::vector<CPosDataset> &posSet)
     trainimagefolder.resize(n_folders);
     for(int i = 0;i < n_folders; ++i)
         in >> trainimagefolder.at(i);
+    std::cout << trainimagefolder.at(0) << std::endl;
 
     // close train pos data folder list
     in.close();
@@ -430,6 +129,7 @@ void loadTrainPosFile(CConfig conf, std::vector<CPosDataset> &posSet)
             //read file names
             trainDataList >> nameTemp;
             posTemp.setRgbImagePath(imageFilePath + nameTemp);
+	    
 
             trainDataList >> nameTemp;
             posTemp.setDepthImagePath(imageFilePath + nameTemp);
@@ -454,8 +154,9 @@ void loadTrainPosFile(CConfig conf, std::vector<CPosDataset> &posSet)
             database.add(posTemp.getParam()->getClassName(), tempSize, 0);
 
             //read angle grand truth
-            double tempAngle;
-            trainDataList >> tempAngle;
+            double tempAngle[3];
+            trainDataList >> tempAngle[2];
+
             posTemp.setAngle(tempAngle);
 
             tempDataSet.push_back(posTemp);
@@ -474,6 +175,7 @@ void loadTrainPosFile(CConfig conf, std::vector<CPosDataset> &posSet)
 
         while(ite != chosenData.end()){
             posSet.push_back(tempDataSet.at(*ite + dataOffset));
+            //std::cout << tempDataSet.at(*ite + dataOffset).getRgbImagePath() << std::endl;
             ite++;
         }
         dataOffset += database.vNode.at(j).instances;
@@ -513,7 +215,7 @@ void loadTrainNegFile(CConfig conf, std::vector<CNegDataset> &negSet)
         std::cout << negDataFilePath << " loaded!" << std::endl;
         in >> n_files;
 
-        negSet.clear();
+        //negSet.clear();
 
         for(int i = 0; i < n_files; ++i){
             CNegDataset negTemp;
@@ -551,6 +253,7 @@ void extractPosPatches(std::vector<CPosDataset> &posSet,
     int pixNum;
     nCk nck;
     int classNum = 0;
+    cv::Mat roi;
 
     posPatch.clear();
 
@@ -566,14 +269,20 @@ void extractPosPatches(std::vector<CPosDataset> &posSet,
                 tempRect.x = j;
                 tempRect.y = k;
                 pixNum = 0;
-                int centerDepthFlag = 1;
+
 
                 // detect negative patch
-                for(int m = j; m < j + conf.p_width; ++m){
-                    for(int n = k; n < k + conf.p_height; ++n){
-                        pixNum += (int)(posSet.at(l).img.at(1)->at<ushort>(n, m));
-                    }
-                }
+//                if(conf.learningMode != 2 && posSet.at(l).img.at(1)->at<ushort>(k + (conf.p_height / 2) + 1, j + (conf.p_width / 2) + 1 ) != 0){
+
+//                    roi = (*posSet.at(l).img.at(1))(cv::Rect(j, k, conf.p_width, conf.p_height));
+//                    pixNum = calcSumOfDepth(roi,conf);
+//                }
+//                    for(int m = j; m < j + conf.p_width; ++m){
+//                        for(int n = k; n < k + conf.p_height; ++n){
+//                            if(posSet.at(l).img.at(1)->at<ushort>(k + (conf.p_height / 2) + 1, j + (conf.p_width / 2) + 1 ) != 0)
+//                                pixNum += (int)(posSet.at(l).img.at(1)->at<ushort>(n, m));
+//                        }
+//                    }
 
                 // set patch class
                 classNum = classDatabase.search(posSet.at(l).getParam()->getClassName());//dataSet.at(l).className.at(0));
@@ -585,14 +294,41 @@ void extractPosPatches(std::vector<CPosDataset> &posSet,
                 //tPatch.setPatch(temp, image.at(l), dataSet.at(l), classNum);
 
 
+
                 CPosPatch posTemp(&posSet.at(l),tempRect);
-                if (pixNum > 0 && posSet.at(l).img.at(1)->at<ushort>(k + (conf.p_height / 2) + 1, j + (conf.p_width / 2) + 1 ) != 0){
-                    tPosPatch.push_back(posTemp);
-                    patchPerClass.at(classNum).push_back(posTemp);
-                } // if
+
+                int centerDepthFlag = 0;
+
+                if(conf.learningMode != 2){
+                    cv::Mat tempDepth1 = *posTemp.getDepth();
+                    cv::Mat tempDepth2 = tempDepth1(tempRect);
+
+                    if(tempDepth2.at<ushort>(conf.p_height / 2 + 1, conf.p_width / 2 + 1) == 0)
+                        centerDepthFlag = 1;
+
+                }
+
+                //if (conf.learningMode == 2){// || pixNum > 0){
+                if(centerDepthFlag != 1){
+
+                    if(conf.learningMode != 2)
+                        normarizationByDepth(posTemp , conf);
+
+                    if(posTemp.getRoi().width > 5 && posTemp.getRoi().height > 5){
+                        tPosPatch.push_back(posTemp);
+                        patchPerClass.at(classNum).push_back(posTemp);
+                    }
+                }
+
+                //} // if
             }//x
         }//y
     }//allimages
+
+    for(int w = 0; w < patchPerClass.size(); ++w){
+        std::cout << patchPerClass.at(w).size() << " ";
+    }
+    std::cout << std::endl;
 
     std::vector<int> patchNum(patchPerClass.size(),conf.patchRatio);
 
@@ -601,6 +337,10 @@ void extractPosPatches(std::vector<CPosDataset> &posSet,
             patchNum.at(i) = conf.patchRatio;
         else
             patchNum.at(i) = conf.patchRatio * conf.acPatchRatio;
+    }
+
+    for(int w = 0; w < patchPerClass.size(); ++w){
+        std::cout << patchPerClass.at(w).size() << " ";
     }
 
     // choose patch from each image
@@ -612,11 +352,22 @@ void extractPosPatches(std::vector<CPosDataset> &posSet,
 
             while(ite != chosenPatch.end()){
                 //std::cout << "this is for debug ite is " << tPosPatch.at(*ite).center << std::endl;
+                //std::cout <<posPatch.at(i)
+                //std::cout << patchPerClass.at(i).at(*ite).getRgbImageFilePath() << std::endl;
                 posPatch.push_back(patchPerClass.at(i).at(*ite));
                 ite++;
             }
         }else{
+//                std::cout << classNum << std::endl;
+////            cv::namedWindow("test");
+////            cv::imshow("test", *posSet.at(0).img.at(0));
+////            cv::waitKey(0);
+////            cv::destroyWindow("test");
+//            //std::cout << *posSet.at(1).img.at(1) << std::endl;
+//                std::cout << patchPerClass.size() << std::endl;
+
             std::cout << "can't extruct enough patch" << std::endl;
+            //exit(-1);
         }
     }
     return;
@@ -646,20 +397,42 @@ void extractNegPatches(std::vector<CNegDataset> &negSet,
 
                 tempRect.x = j;
                 tempRect.y = k;
-                ushort pix = 0;
+                int pix = 0;
 
                 // detect negative patch
-                for(int m = j; m < j + conf.p_width; ++m){
-                    for(int n = k; n < k + conf.p_height; ++n){
-                        pix += negSet.at(i).img.at(1)->at<ushort>(n, m);
-                    }
-                }
+//                if(conf.learningMode != 2 && negSet.at(i).img.at(1)->at<ushort>(k + (conf.p_height / 2) + 1, j + (conf.p_width / 2) + 1 ) != 0){
+//                    cv::Mat roi;
+//                    roi = (*negSet.at(i).img.at(1))(cv::Rect(j, k, conf.p_width, conf.p_height));
+//                    pix = calcSumOfDepth(roi,conf);
+//                }
+
+
+
+                //if (conf.learningMode == 2){// || pixNum > 0){
+                //if(centerDepthFlag != 1){
 
                 //tPatch.setPatch(temp, negImage.at(i));
-                if(pix > 0){
+                //if(conf.learningMode == 2 || pix > 0){
                     CNegPatch negTemp(&negSet.at(i),tempRect);
-                    tNegPatch.push_back(negTemp);
-                }
+
+                    int centerDepthFlag = 0;
+
+                    if(conf.learningMode != 2){
+                        cv::Mat tempDepth1 = *negTemp.getDepth();
+                        cv::Mat tempDepth2 = tempDepth1(tempRect);
+
+                        if(tempDepth2.at<ushort>(conf.p_height / 2 + 1, conf.p_width / 2 + 1) == 0)
+                            centerDepthFlag = 1;
+
+                    }
+                    if(centerDepthFlag != 1){
+                        if(conf.learningMode != 2)
+                            normarizationByDepth(negTemp , conf);
+
+                        if(negTemp.getRoi().width > 5 && negTemp.getRoi().height > 5)
+                            tNegPatch.push_back(negTemp);
+                    }
+                //}
             }//x
         }//y
     } // every image
@@ -701,11 +474,16 @@ void extractTestPatches(CTestDataset &testSet,std::vector<CTestPatch> &testPatch
             tempRect.x = j;
             tempRect.y = k;
 
-            unsigned short depthSum;
+            int depthSum;
 
-            for(int p = 0; p < testSet.feature.at(32)->rows; ++p)
-                for(int q = 0; q < testSet.feature.at(32)->cols; ++q)
-                    depthSum += testSet.feature.at(32)->at<ushort>(p, q);
+//            if(conf.learningMode != 2 && testSet.img.at(1)->at<ushort>(k + (conf.p_height / 2) + 1, j + (conf.p_width / 2) + 1 ) != 0){
+//                cv::Mat roi;
+//                roi = (*testSet.img.at(1))(cv::Rect(j, k, conf.p_width, conf.p_height));
+//                depthSum = calcSumOfDepth(roi,conf);
+//            }
+//                for(int p = 0; p < testSet.feature.at(32)->rows; ++p)
+//                    for(int q = 0; q < testSet.feature.at(32)->cols; ++q)
+//                        depthSum += testSet.feature.at(32)->at<ushort>(p, q);
 
             //std::cout << dataSet.className << std::endl;
 
@@ -718,13 +496,16 @@ void extractTestPatches(CTestDataset &testSet,std::vector<CTestPatch> &testPatch
                 //exit(-1);
             //}
 
-            if(depthSum > 0){
+            //if(conf.learningMode == 2){// || depthSum > 0){
                 CTestPatch testTemp(&testSet,tempRect);
                 //tesetPatch.setPatch(temp, image, dataSet, classNum);
 
                 //tPatch.setPosition(j,k);
-                testPatch.push_back(testTemp);
-            }
+                if(testSet.img.size() > 1)
+                    normarizationByDepth(testTemp , conf);
+                if(testTemp.getRoi().width > 5 && testTemp.getRoi().height > 5)
+                    testPatch.push_back(testTemp);
+            //}
         }
     }
 }
@@ -786,9 +567,9 @@ void CClassDatabase::read(const char* str){
         return;
     }
 
-    std::cout << str << std::endl;
+    //std::cout << str << std::endl;
 
-    vNode.clear();
+    //vNode.clear();
 
     do{
         in >> tempClassNum;
@@ -798,7 +579,8 @@ void CClassDatabase::read(const char* str){
         in >> tempDepth;
         in.ignore();
         if(!in.eof())
-            vNode.push_back(databaseNode(tempClassName,tempSize,tempDepth));
+            this->add(tempClassName,tempSize,tempDepth);
+
     }while(!in.eof());
 
     in.close();
@@ -821,4 +603,72 @@ int CClassDatabase::search(std::string str) const{
         if(str == vNode.at(i).name)return i;
     }
     return -1;
+}
+
+void normarizationByDepth(CPatch &patch, const CConfig &config){//, const CConfig &config)const {
+    cv::Mat tempDepth = *patch.getDepth();
+
+    cv::Mat depth = tempDepth(patch.getRoi());
+
+    //std::cout << depth << std::endl;
+
+//    cv::namedWindow("test");
+//    cv::imshow("test",depth);
+//    cv::waitKey(0);
+//    cv::destroyAllWindows();
+
+    //std::cout << trainSet.posPatch.at(i).getFeature(32)->at<uchar>(10,10) << std::endl;
+
+    //calc width and height scale
+    double widthSca, heightSca;
+
+    //std::cout << depth.type() << " " << CV_8U << std::endl;
+//    if(depth.type() == CV_8U){
+//        widthSca = config.widthScale * (double)(depth.at<uchar>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_width;
+//        heightSca = config.heightScale * (double)(depth.at<uchar>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_height;
+//        //std::cout << "kotti da" << std::endl;
+//        std::cout << "depth : " << (int)depth.at<uchar>(config.p_height / 2 + 1, config.p_width / 2 + 1) << " widht scale : " << widthSca << " height scape : " << heightSca << std::endl;
+
+//    }else{
+        widthSca = config.widthScale * (double)(depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_width;
+        heightSca = config.heightScale * (double)(depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) + config.mindist) / (double)config.p_height;
+        //std::cout << "depth : " << depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) << " widht scale : " << widthSca << " height scape : " << heightSca << std::endl;
+
+    //}
+
+    // new window size
+    double realWindowWidth, realWindowHeight;
+
+    realWindowWidth = (double)config.p_width / widthSca;
+    realWindowHeight = (double)config.p_height / heightSca;
+
+    //std::cout << "w " << realWindowWidth << " h " << realWindowHeight << std::endl;
+
+    cv::Rect roi;
+
+    roi.x = patch.getRoi().x + (int)((config.p_width - realWindowHeight) / 2);
+    roi.y = patch.getRoi().y + (int)((config.p_height - realWindowWidth) / 2);
+
+    roi.width = (int)realWindowWidth;
+    roi.height = (int)realWindowHeight;
+
+    //std::cout << roi.x << " " << roi.y << " " << roi.width << " "<< roi.height << std::endl;
+
+    //std::cout << depth.at<ushort>(config.p_height / 2 + 1, config.p_width / 2 + 1) << std::endl;
+    //std::cout << roi << std::endl;
+
+    if(roi.x < 0) roi.x = 0;
+    if(roi.y < 0) roi.y = 0;
+    if(roi.x + roi.width > patch.getDepth()->cols) roi.x -= roi.width;
+    if(roi.y + roi.height > patch.getDepth()->rows) roi.y -= roi.height;
+
+    //rgb = rgb(roi);
+    patch.setRoi(roi);
+    //cv::resize(rgb,rgb,cv::Size(config.p_width,config.p_height));
+
+
+    //                cv::namedWindow("test");
+    //                cv::imshow("test",rgb);
+    //                cv::waitKey(0);
+    //                cv::destroyAllWindows();
 }

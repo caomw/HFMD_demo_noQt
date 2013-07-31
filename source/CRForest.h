@@ -8,66 +8,93 @@
 #include "HoG.h"
 #include "CDataset.h"
 
-#include "detectionresult.h"
+#include "CDetectionResult.h"
+//#include <boost/timer/timer.hpp>
+
+#ifndef __APPLE__
+#include <omp.h>
+#endif
+
+class paramHist {
+public:
+    paramHist(){
+        //h.resize(3);
+//        for(int i = 0; i < 3; ++i)
+//            h.at(i) = new cv::Mat_<int>::zeros(1, 360);
+        roll = cv::Mat_<double>::zeros(1, 360);
+        pitch = cv::Mat_<double>::zeros(1, 360);
+        yaw = cv::Mat_<double>::zeros(1, 360);
+    }
+
+    ~paramHist(){
+
+    }
+
+    paramHist& operator+(const paramHist&);
+    paramHist& operator+=(const paramHist&);
+
+    cv::Mat_<double> roll, pitch, yaw;
+    void showHist();
+};
 
 static HoG hog;
 
 class CRForest {
- public:
-  CRForest(CConfig config){
-    conf = config;
-    vTrees.resize(conf.ntrees);
-  }
-  ~CRForest() {
-    int numberOfTrees = vTrees.size();
-    for(int i = 0;i < numberOfTrees;++i){
-      if(vTrees.at(i) != NULL)
-	delete vTrees.at(i);
+public:
+    CRForest(CConfig config){
+        conf = config;
+        vTrees.resize(conf.ntrees);
     }
-  }
-  
-  void learning();
+    ~CRForest() {
+        int numberOfTrees = vTrees.size();
+        for(int i = 0;i < numberOfTrees;++i){
+            if(vTrees.at(i) != NULL)
+                delete vTrees.at(i);
+        }
+    }
 
-  void growATree(const int treeNum);
-  
-  void detection(CTestDataset &testSet) const;//, std::vector<double> &detectionResult, int &detectClass) const;
-  
-  void extractPatches(std::vector<std::vector<CPatch> > &patches, 
-		      const std::vector<CDataset> dataSet, 
-		      const cv::vector<cv::vector<cv::Mat*> > &image, 
-		      /*boost::mt19937 gen, */CConfig conf);
+    void learning();
 
-  void extractPatches(std::vector<std::vector<CPatch> > &patches,
-                      const std::vector<CDataset> dataSet,
-                      const cv::vector<cv::vector<cv::Mat*> > &image,
-                      const cv::vector<cv::vector<cv::Mat*> > &negImage,
-                      CConfig conf,
-                      const int treeNum);
+    void growATree(const int treeNum);
 
-  void loadForest();
+    CDetectionResult detection(CTestDataset &testSet) const;//, std::vector<double> &detectionResult, int &detectClass) const;
 
-  // Regression 
-  void regression(std::vector<const LeafNode*>& result, 
-          CTestPatch &patch) const;
+    void extractPatches(std::vector<std::vector<CPatch> > &patches,
+                        const std::vector<CDataset> dataSet,
+                        const cv::vector<cv::vector<cv::Mat*> > &image,
+                        /*boost::mt19937 gen, */CConfig conf);
+
+    void extractPatches(std::vector<std::vector<CPatch> > &patches,
+                        const std::vector<CDataset> dataSet,
+                        const cv::vector<cv::vector<cv::Mat*> > &image,
+                        const cv::vector<cv::vector<cv::Mat*> > &negImage,
+                        CConfig conf,
+                        const int treeNum);
+
+    void loadForest();
+
+    // Regression
+    void regression(std::vector<const LeafNode*>& result,
+                    CTestPatch &patch) const;
 
 
 
-//  void loadImages(cv::vector<cv::vector<cv::Mat*> > &img,
-//		  std::vector<CDataset> &dataSet);
+    //  void loadImages(cv::vector<cv::vector<cv::Mat*> > &img,
+    //		  std::vector<CDataset> &dataSet);
 
-//  void extractFeatureChannels(const cv::Mat* img,
-//			      cv::vector<cv::Mat*>& vImg) const;
-//  void minFilter(cv::Mat* src, cv::Mat* des, int fWind) const;
-//  void maxFilter(cv::Mat* src, cv::Mat* des, int fWind) const;
+    //  void extractFeatureChannels(const cv::Mat* img,
+    //			      cv::vector<cv::Mat*>& vImg) const;
+    //  void minFilter(cv::Mat* src, cv::Mat* des, int fWind) const;
+    //  void maxFilter(cv::Mat* src, cv::Mat* des, int fWind) const;
 
-  //void voteResult(int classNumber, )
+    //void voteResult(int classNumber, )
 
-  CClassDatabase classDatabase;
+    CClassDatabase classDatabase;
 
- private:
-  CConfig		conf;
-  std::vector<CRTree*>	vTrees;
-  
+private:
+    CConfig		conf;
+    std::vector<CRTree*>	vTrees;
+
 };
 
 //inline void CRForest::extractFeatureChannels(const cv::Mat* img, cv::vector<cv::Mat*>& vImg) const{
@@ -78,22 +105,22 @@ class CRForest {
 
 
 //  //std::cout << img->channels() << std::endl;
-  
+
 //  cv::cvtColor(*img, *(vImg.at(0)), CV_RGB2GRAY);
 
 
 //  cv::Mat I_x(img->rows, img->cols, CV_16SC1);
 //  cv::Mat I_y(img->rows, img->cols, CV_16SC1);
 
-   
+
 //  cv::Sobel(*(vImg.at(0)), I_x, CV_16S, 1, 0);
 //  cv::Sobel(*(vImg.at(0)), I_y, CV_16S, 0, 1);
 
 //  cv::convertScaleAbs(I_x, *(vImg[3]), 0.25);
 //  cv::convertScaleAbs(I_y, *(vImg[4]), 0.25);
-  
+
 //  //std::cout << "vimg[3]" << std::endl;
-  
+
 //   /* cv::namedWindow("test"); */
 //   /* cv::imshow("test",*(vImg[3])); */
 //   /* cv::waitKey(0); */
@@ -109,7 +136,7 @@ class CRForest {
 //      //std::cout << "scaling" << std::endl;
 //      vImg.at(2)->at<uchar>(y, x) = (uchar)sqrt((float)I_x.at<short>(y, x)* (float)I_x.at<short>(y, x) + (float)I_y.at<short>(y, x) * (float)I_y.at<short>(y, x));
 //    }
-  
+
 //  // Magunitude of gradients
 //  for(int y = 0; y < img->rows; y++)
 //      for(int x = 0; x < img->cols; x++ ) {
@@ -149,9 +176,9 @@ class CRForest {
 //    maxFilter(vImg[c], vImg[c], 5);
 
 
- 
+
 //  /* std::cout << "extructing feature 2 " << std::endl; */
-  
+
 //}
 
 //inline void CRForest::minFilter(cv::Mat* src, cv::Mat* des, int fWind) const{
@@ -198,7 +225,7 @@ class CRForest {
 //	roi = cv::Rect(0, y, src->cols, fWind);
 
 //      cv::reduce((*src)(roi), vTemp, 0, CV_REDUCE_MAX);
-      
+
 //      roi = cv::Rect(0, y + d, src->cols, 1);
 //      cv::Mat roiDesTemp(desTemp, roi);
 //      vTemp.copyTo(desTemp(roi));
@@ -211,13 +238,13 @@ class CRForest {
 //      roi = cv::Rect(x, 0, fWind, src->rows);
 
 //    cv::reduce(desTemp(roi), vTemp, 1, CV_REDUCE_MAX);
-      
+
 //    roi = cv::Rect(x + d, 0, 1, src->rows);
 //    cv::Mat roiDesTemp(*des, roi);
 //    vTemp.copyTo((*des)(roi));// = vTemp.clone();//copyTo((*des)(roi));
 //  } // for image width
 
-  
+
 //}
 
 #endif
