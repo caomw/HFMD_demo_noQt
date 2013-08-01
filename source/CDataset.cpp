@@ -47,8 +47,8 @@ void cropImageAndDepth(cv::Mat* rgb, cv::Mat* depth, double mindist, double maxd
     cv::Mat allMinDepth = cv::Mat::ones(depth->rows, depth->cols, CV_16U) * (ushort)mindist;
     cv::Mat allMaxDepth = cv::Mat::ones(depth->rows, depth->cols, CV_16U) * (ushort)maxdist;
 
-    cv::min(*depth, allMaxDepth, *depth);
-    cv::max(*depth, allMinDepth, *depth);
+    //cv::min(*depth, allMaxDepth, *depth);
+    //cv::max(*depth, allMinDepth, *depth);
 
     //    depth->convertTo(depthForView, CV_8U, 255.0 / 1000.0);
     //    cv::namedWindow("test");

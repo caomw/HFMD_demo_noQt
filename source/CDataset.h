@@ -12,6 +12,8 @@
 
 //#include "util.h"
 
+void cropImageAndDepth(cv::Mat* rgb, cv::Mat* depth, double mindist, double maxdist);
+
 class CParamset{
 public:
     CParamset(){}

@@ -4,6 +4,7 @@
 #include <boost/timer.hpp>
 
 #include "util.h"
+#include "CDataset.h"
 
 using namespace std;
 
@@ -126,22 +127,24 @@ void detect(const CRForest &forest, CConfig conf){
 
         kinect.getRGBDData(rgb, depth);
 
+        cropImageAndDepth(rgb, depth, conf.mindist, conf.maxdist);
+
         CTestDataset seqImg;
         seqImg.img.push_back(rgb);
         seqImg.img.push_back(depth);
 
         cv::Mat showDepth = cv::Mat(depth->rows, depth->cols, CV_8U);
-                depth->convertTo(showDepth, CV_8U, 255.0 / 1000.0);
+        depth->convertTo(showDepth, CV_8U, 255.0 / 1000.0);
 
-                cv::imshow("detectResult", *seqImg.img.at(0));
-                cv::imshow("depth", showDepth);
+        cv::imshow("detectResult", *seqImg.img.at(0));
+        cv::imshow("depth", showDepth);
 
 
         //seqImg.img.at(1)->convertTo(*showDepth, CV_8U, 255.0 / 1000.0);
 
         //cv::waitKey(0);
 
-        detectR = forest.detection(seqImg);
+        //detectR = forest.detection(seqImg);
 
     }
     //delete showDepth;

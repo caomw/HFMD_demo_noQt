@@ -238,7 +238,7 @@ void CRForest::loadForest(){
 CDetectionResult CRForest::detection(CTestDataset &testSet) const{
     int classNum = classDatabase.vNode.size();//contain class number
     std::vector<CTestPatch> testPatch;
-    std::vector<const LeafNode*> result;
+    //std::vector<const LeafNode*> result;
 
     //std::vector<const LeafNode*> storedLN(0);
     //std::vector<std::vector<CParamset> > cluster(0);
@@ -304,36 +304,55 @@ CDetectionResult CRForest::detection(CTestDataset &testSet) const{
 
     std::cout << "class num = " << classNum << std::endl;
 
-    for(int j = 0; j < testPatch.size(); ++j){
-        // regression current patch
-        result.clear();
-        this->regression(result, testPatch.at(j));
-
-        // for each tree leaf
-        for(int m = 0; m < result.size(); ++m){
 #pragma omp parallel
             {
 #pragma omp for
 
+    for(int j = 0; j < testPatch.size(); ++j){
+        // regression current patch
+        std::vector<const LeafNode*> result(0);
+        //result.clear();
+        this->regression(result, testPatch.at(j));
+        //std::cout << j << std::endl;
+        // for each tree leaf
+        for(int m = 0; m < result.size(); ++m){
+
+
+            //std::cout << "haittayo" << std::endl;
                 for(int l = 0; l < result.at(m)->pfg.size(); ++l){
                     if(result.at(m)->pfg.at(l) > 0.9){
                         int cl = classDatabase.search(result.at(m)->param.at(l).at(0).getClassName());
+
 
                         for(int n = 0; n < result.at(m)->param.at(cl).size(); ++n){
                             cv::Point patchSize(conf.p_height/2,conf.p_width/2);
                             cv::Point pos(testPatch.at(j).getRoi().x + patchSize.x +  result.at(m)->param.at(cl).at(n).getCenterPoint().x,
                                           testPatch.at(j).getRoi().y + patchSize.y +  result.at(m)->param.at(cl).at(n).getCenterPoint().y);
+
+                            //cv::Mat tempVote = cv::Mat::zeros(imgRow, imgCol, CV_32FC1);
+
                             // vote to result image
-                            if(pos.x > 0 && pos.y > 0 && pos.x < voteImage.at(cl).cols && pos.y < voteImage.at(cl).rows){
-                                double v = result.at(m)->pfg.at(cl) / ( result.size() * result.at(m)->param.at(l).size());
-                                voteImage.at(cl).at<float>(pos.y,pos.x) += v;//(result.at(m)->pfg.at(c) - 0.9);// * 100;//weight * 500;
-                                voteParam2.at(cl)[pos.y][pos.x].roll.at<double>(0,result.at(m)->param.at(l).at(n).getAngle()[0]) += v * 10000;
-                                voteParam2.at(cl)[pos.y][pos.x].pitch.at<double>(0,result.at(m)->param.at(l).at(n).getAngle()[1]) += v * 10000;
-                                voteParam2.at(cl)[pos.y][pos.x].yaw.at<double>(0,result.at(m)->param.at(l).at(n).getAngle()[2]) += v * 10000;
-                                //std::cout << result.at(m)->param.at(l).at(n).getAngle() << std::endl;
-                                //std::cout << v << std::endl;
-                                totalVote.at(cl) += 1;
-                            }
+
+                        //{
+//                                std::cout << "voting" << std::endl;
+                                if(pos.x > 0 && pos.y > 0 && pos.x < voteImage.at(cl).cols && pos.y < voteImage.at(cl).rows){
+                                    //#pragma omp critical
+                                    double v = result.at(m)->pfg.at(cl) / ( result.size() * result.at(m)->param.at(l).size());
+                                    #pragma omp critical
+                                    voteImage.at(cl).at<float>(pos.y,pos.x) += v;//(result.at(m)->pfg.at(c) - 0.9);// * 100;//weight * 500;
+                                    #pragma omp critical
+                                    voteParam2.at(cl)[pos.y][pos.x].roll.at<double>(0,result.at(m)->param.at(l).at(n).getAngle()[0]) += v * 10000;
+                                    #pragma omp critical
+                                    voteParam2.at(cl)[pos.y][pos.x].pitch.at<double>(0,result.at(m)->param.at(l).at(n).getAngle()[1]) += v * 10000;
+                                    #pragma omp critical
+                                    voteParam2.at(cl)[pos.y][pos.x].yaw.at<double>(0,result.at(m)->param.at(l).at(n).getAngle()[2]) += v * 10000;
+                                    //std::cout << result.at(m)->param.at(l).at(n).getAngle() << std::endl;
+                                    //std::cout << v << std::endl;
+                                    #pragma omp critical
+                                    totalVote.at(cl) += 1;
+                                    //std::cout << totalVote.at(0)  << std::endl;
+                                }
+                            //}
 
                         } //for(int n = 0; n < result.at(m)->param.at(cl).size(); ++n){
                     } //if(result.at(m)->pfg.at(l) > 0.9){
@@ -345,6 +364,8 @@ CDetectionResult CRForest::detection(CTestDataset &testSet) const{
     } // for every patch
 
     // vote end
+
+    std::cout << "vote end" << std::endl;
 
 #pragma omp parallel
     {
