@@ -19,7 +19,7 @@
 		-->
 	
 		<!-- Set global mirror -->
-		<GlobalMirror on="true"/>
+                <GlobalMirror on="false"/>
 
         <Node type="Image" name="Image1">
             <Configuration>
@@ -45,7 +45,7 @@
                 <MapOutputMode xRes="640" yRes="480" FPS="30"/>
                 <!---->
 
-				<!-- Uncomment to override global mirror
+                                <!-- Uncomment to override global mirror
                                 <Mirror on="false" />
                                 -->
                                 </Configuration>

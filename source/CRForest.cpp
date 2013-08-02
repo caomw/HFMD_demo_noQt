@@ -514,8 +514,12 @@ CDetectionResult CRForest::detection(CTestDataset &testSet) const{
         detectedClass.error = minError;
         detectedClass.nearestClass = nearestObject;
         detectedClass.score = voteImage.at(c).at<float>(maxLoc.y, maxLoc.x);
+        detectedClass.centerPoint = maxLoc;
         detectResult.detectedClass.push_back(detectedClass);
     } // for every class
+
+    detectResult.voteImage.clear();
+    detectResult.voteImage.push_back(voteImage.at(0));
 
     for(int k = 0; k < classNum; ++k){
         for(int i = 0; i < imgRow; ++i){

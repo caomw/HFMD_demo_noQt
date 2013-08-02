@@ -1,5 +1,6 @@
 #include "CRForest.h"
 #include "ctlkinect.h"
+//#include "CDetectionResult.h"
 #include <opencv2/opencv.hpp>
 #include <boost/timer.hpp>
 
@@ -136,15 +137,23 @@ void detect(const CRForest &forest, CConfig conf){
         cv::Mat showDepth = cv::Mat(depth->rows, depth->cols, CV_8U);
         depth->convertTo(showDepth, CV_8U, 255.0 / 1000.0);
 
-        cv::imshow("detectResult", *seqImg.img.at(0));
-        cv::imshow("depth", showDepth);
+
 
 
         //seqImg.img.at(1)->convertTo(*showDepth, CV_8U, 255.0 / 1000.0);
 
         //cv::waitKey(0);
 
-        //detectR = forest.detection(seqImg);
+        detectR = forest.detection(seqImg);
+
+        cv::circle(*seqImg.img.at(0),detectR.detectedClass.at(0).centerPoint,5,cv::Scalar(255,255,255));
+
+        cv::Mat showVote = cv::Mat(depth->rows, depth->cols, CV_8U);
+        detectR.voteImage.at(0).convertTo(showVote, CV_8U, 255.0 * 100);
+
+        cv::imshow("detectResult", *seqImg.img.at(0));
+        cv::imshow("depth", showDepth);
+        cv::imshow("voteImage", showVote);
 
     }
     //delete showDepth;
