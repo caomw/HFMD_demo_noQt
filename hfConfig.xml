@@ -7,7 +7,7 @@
 <!-- Patch width -->
 <pwidth>20</pwidth>
 <!-- Patch height -->
-<pheight>20</pheight>
+n<pheight>20</pheight>
 <!-- Path to images-->
 <!--<imgpath>example/testimage</imgpath>-->
 <!-- Image name list -->
@@ -33,13 +33,13 @@
 <!-- min sample number-->
 <minsample>5</minsample>
 <!-- max depth of tree-->
-<maxdepth>10</maxdepth>
+<maxdepth>15</maxdepth>
 <!-- feature channel number-->
 <featurechannel>2</featurechannel>
 <!-- extract patch ratio-->
 <patchratio>1000</patchratio>
 <!-- Stride -->
-<stride>5</stride>
+<stride>10</stride>
 <!-- Offset of tree-->
 <offTree>0</offTree>
 <!-- test data path -->
@@ -51,13 +51,13 @@
 <testmode>1</testmode>
 <detectthreshold>3.0</detectthreshold>
 <traindatalistname>dataListInst2.0.txt</traindatalistname>
-<testdatalistname>testDataListInst2.0.txt</testdatalistname>
+<testdatalistname>testDataList.txt</testdatalistname>
 <showgrandtruth>1</showgrandtruth>
 <negativedatapath>negdata</negativedatapath>
 <negativedatafolderlist>negDataFolderList.txt</negativedatafolderlist>
 <negativedatalist>negDataList.txt</negativedatalist>
 <negativemode>1</negativemode>
-<posnegpatchratio>2.0</posnegpatchratio>
+<posnegpatchratio>5.0</posnegpatchratio>
 <activepatchratio>1.0</activepatchratio>
 <mindistance>350</mindistance>
 <maxdistance>1400</maxdistance>
@@ -70,4 +70,5 @@
 <paramradius>3</paramradius>
 <modellistfolder>models</modellistfolder>
 <modellistname>models.txt</modellistname>
+<modellearningmode>0</modellearningmode>
 </root>

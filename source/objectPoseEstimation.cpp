@@ -1,11 +1,11 @@
-#include "CRForest.h"
+#include <HFMD_core/CRForest.h>
 #include "ctlkinect.h"
 //#include "CDetectionResult.h"
 #include <opencv2/opencv.hpp>
 #include <boost/timer.hpp>
 
-#include "util.h"
-#include "CDataset.h"
+#include <HFMD_core/util.h>
+#include <HFMD_core/CDataset.h>
 
 using namespace std;
 
@@ -182,6 +182,7 @@ int main(int argc, char* argv[]){
     else
         conf.off_tree = atoi(argv[2]);
 
+    conf.demoMode = 1;
     // create random forest class
     CRForest forest(conf);
 

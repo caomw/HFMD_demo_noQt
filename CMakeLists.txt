@@ -66,11 +66,11 @@ LINK_DIRECTORIES("/usr/local/lib")
 SET(RANDOM_FOREST source/CRForest.cpp source/util.cpp source/CRTree.cpp source/HoG.cpp source/CDataset.cpp source/ctlkinect.cpp source/CConfig.cpp)
 
 # 実行ファイルを生成
-ADD_EXECUTABLE(HFMD_demo_noQt source/objectPoseEstimation.cpp ${RANDOM_FOREST})
+ADD_EXECUTABLE(HFMD_demo_noQt source/objectPoseEstimation.cpp source/ctlkinect.cpp)# ${RANDOM_FOREST})
 #ADD_EXECUTABLE(learning source/learning.cpp ${RANDOM_FOREST})
 
 # ライブラリとリンクする
-TARGET_LINK_LIBRARIES(HFMD_demo_noQt ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} ${SSE_FLAGS} ${OPEN_NI_LIBRARIES})
+TARGET_LINK_LIBRARIES(HFMD_demo_noQt HFMD_core ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} ${SSE_FLAGS} ${OPEN_NI_LIBRARIES})
 #TARGET_LINK_LIBRARIES(learning ${OpenCV_LIBRARIES} ${Boost_LIBRARIES})
 
 # バージョン番号の適用
