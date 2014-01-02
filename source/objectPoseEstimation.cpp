@@ -9,6 +9,10 @@
 
 using namespace std;
 
+int face[] = {cv::FONT_HERSHEY_SIMPLEX, cv::FONT_HERSHEY_PLAIN, cv::FONT_HERSHEY_DUPLEX, cv::FONT_HERSHEY_COMPLEX, 
+	      cv::FONT_HERSHEY_TRIPLEX, cv::FONT_HERSHEY_COMPLEX_SMALL, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 
+	      cv::FONT_HERSHEY_SCRIPT_COMPLEX, cv::FONT_ITALIC};
+
 void loadTestFileMultiObject(CConfig conf, std::vector<CTestDataset> &testSet){
     std::string testfilepath = conf.testPath + PATH_SEP +  conf.testData;
     int n_folders;
@@ -121,32 +125,51 @@ void detect(const CRForest &forest, CConfig conf){
 //        detectR = forest.detection(dataSet.at(i));
 //        result << dataSet.at(i).param.at(0).getClassName() << " " << detectR.className << " " << detectR.found << " " << detectR.score << " " << detectR.error << std::endl;
 
-
-
         cv::Mat *rgb = new cv::Mat(480,640,CV_8UC3);
         cv::Mat *depth = new cv::Mat(480,640,CV_16UC1);
 
         kinect.getRGBDData(rgb, depth);
 
         cropImageAndDepth(rgb, depth, conf.mindist, conf.maxdist);
-
+        //        cv::GaussianBlur(*depth,*depth, cv::Size(21,21),0);
         CTestDataset seqImg;
         seqImg.img.push_back(rgb);
         seqImg.img.push_back(depth);
 
+        detectR = forest.detection(seqImg);
+        
         cv::Mat showDepth = cv::Mat(depth->rows, depth->cols, CV_8U);
         depth->convertTo(showDepth, CV_8U, 255.0 / 1000.0);
-
-
-
 
         //seqImg.img.at(1)->convertTo(*showDepth, CV_8U, 255.0 / 1000.0);
 
         //cv::waitKey(0);
+        
+	for(uint i = 0; i < detectR.detectedClass.size();++i){
+	  if(detectR.detectedClass[i].score > 0.00){
+	    cv::Scalar color((i+1)*130%255, (i+2)*130%255,i*130%255);
+    
+	    cv::circle(*seqImg.img.at(0), detectR.detectedClass[i].centerPoint, 5, color,2);
+	    cv::putText(*seqImg.img.at(0), 
+			detectR.detectedClass[i].name, 
+			detectR.detectedClass[i].centerPoint + cv::Point(0,30), 
+			face[4]|face[8], 
+			0.8, 
+			color, 2, CV_AA);
 
-        detectR = forest.detection(seqImg);
+	    std::stringstream ss;
+	    ss << detectR.detectedClass[i].score;
+	    cv::putText(*seqImg.img.at(0), 
+			ss.str(),
+			detectR.detectedClass[i].centerPoint + cv::Point(0,60), 
+			face[4]|face[8], 
+			0.8, 
+			color, 2, CV_AA);
+	  }
+	}
 
-        cv::circle(*seqImg.img.at(0),detectR.detectedClass.at(0).centerPoint,5,cv::Scalar(255,255,255));
+
+	//  cv::circle(*seqImg.img.at(0),detectR.detectedClass.at(0).centerPoint,5,cv::Scalar(255,255,255));
 
         cv::Mat showVote = cv::Mat(depth->rows, depth->cols, CV_8U);
         detectR.voteImage.at(0).convertTo(showVote, CV_8U, 255.0 * 100);
@@ -154,6 +177,12 @@ void detect(const CRForest &forest, CConfig conf){
         cv::imshow("detectResult", *seqImg.img.at(0));
         cv::imshow("depth", showDepth);
         cv::imshow("voteImage", showVote);
+
+        cv::imwrite("rgb.png", *seqImg.img.at(0));
+        cv::imwrite("depth.png", *seqImg.img.at(1));
+
+	delete rgb;
+	delete depth;
 
     }
     //delete showDepth;
@@ -173,7 +202,7 @@ int main(int argc, char* argv[]){
     //check argument
     if(argc < 2) {
         cout << "Usage: ./learning [config.xml]"<< endl;
-        conf.loadConfig("hfConfig.xml");
+        conf.loadConfig("config.xml");
     } else
         conf.loadConfig(argv[1]);
 
@@ -187,15 +216,6 @@ int main(int argc, char* argv[]){
     CRForest forest(conf);
 
     forest.loadForest();
-
-    //create tree directory
-    string opath(conf.outpath);
-    //std::cout << "kokomade kitayo" << std::endl;
-    //std::cout << conf.outpath << std::endl;
-    opath.erase(opath.find_last_of(PATH_SEP));
-    string execstr = "mkdir ";
-    execstr += opath;
-    system( execstr.c_str() );
 
     // learning
     //forest.learning();
